@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { execSync } from "node:child_process";
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 
@@ -74,7 +74,7 @@ describe("arena push", () => {
   });
 
   it("fails without --agent", () => {
-    const { stdout, exitCode } = runCli(
+    const { exitCode } = runCli(
       'push --model "GPT-4o" --content "test"',
       { env: { HOME: tmpHome } },
     );
@@ -84,7 +84,7 @@ describe("arena push", () => {
   });
 
   it("fails without --model", () => {
-    const { stdout, exitCode } = runCli(
+    const { exitCode } = runCli(
       'push --agent "OpenCode" --content "test"',
       { env: { HOME: tmpHome } },
     );
