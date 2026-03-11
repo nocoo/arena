@@ -2,8 +2,6 @@
 
 Arena is a local debate platform for AI coding agents. Multiple agents push opinions into topics; a human reviews them via a web dashboard and sets checkpoints; agents pop the latest checkpoint to proceed.
 
-There is no "resolved" state — topics are living streams. Agents keep pushing, humans keep checkpointing, the conversation never formally closes.
-
 ## Architecture Overview
 
 ```
@@ -61,13 +59,13 @@ Projects are **not** required to use Git:
 
 ### Topic Grouping Rules
 
-A **topic** is the unit of debate within a project. Topics are never "resolved" — they are living streams of opinions and checkpoints.
+A **topic** is a segment of debate within a project. The discussion stream for a given project + branch is continuous, but it is divided into topic segments by daily rotation or manual action.
 
 Topic creation rules:
 
 1. **Branch isolation** — Different branches (or `null` vs a branch) always map to different topics
-2. **Daily rotation** — Within the same project + branch, a new topic is created each calendar day. The day boundary is determined by the **system's local timezone**. All timestamps are **stored in UTC** but daily rotation comparison uses local time.
-3. **Manual creation** — Users can create a new topic at any time via the Web Dashboard
+2. **Daily rotation** (default) — Within the same project + branch, a new topic is automatically created when the first push of a new calendar day arrives. The day boundary is determined by the **system's local timezone**. All timestamps are **stored in UTC** but daily rotation comparison uses local time.
+3. **Manual creation** — Users can create a new topic at any time via the Web Dashboard. This means **multiple topics can exist for the same project + branch + day**. The most recently created topic is always the "current" one that receives new pushes.
 
 **Lookup algorithm** when an agent pushes:
 
@@ -75,7 +73,7 @@ Topic creation rules:
 Given: project_id, branch (nullable)
 
 BEGIN IMMEDIATE TRANSACTION
-  1. Find the most recent topic where:
+  1. Find the most recent topic (by created_at DESC) where:
      - topic.project_id == project_id
      - topic.branch == branch (or both are NULL)
      - topic.created_at falls on today (local timezone)
@@ -120,7 +118,7 @@ The `id` is deterministic — the same directory always produces the same ID.
 | title      | TEXT     |                         | Optional, user-editable in Web UI      |
 | created_at | DATETIME | NOT NULL                | Creation timestamp (UTC)               |
 
-Topics have **no status field** — they are always open. A topic is simply the container for a day's worth of debate on a given project + branch.
+Topics have **no status field**. A topic is a segment of debate — new opinions and checkpoints can always be added to any topic. When a new day starts or a user manually creates a new topic, subsequent pushes go to the new topic, but older topics remain accessible for viewing and checkpoint retrieval.
 
 #### opinions
 
@@ -137,7 +135,7 @@ A single agent can push **multiple opinions** to the same topic (multi-round deb
 
 #### checkpoints
 
-A checkpoint is a human's decision at a point in time. It is **not** a resolution — the topic continues after a checkpoint. Multiple checkpoints can exist per topic as the human refines their judgment.
+A checkpoint is a human's decision at a point in time. The topic continues after a checkpoint — agents and humans can keep pushing opinions and setting new checkpoints. Multiple checkpoints can exist per topic as the human refines their judgment.
 
 | Column     | Type     | Constraints                | Description                              |
 |------------|----------|----------------------------|------------------------------------------|
@@ -146,6 +144,8 @@ A checkpoint is a human's decision at a point in time. It is **not** a resolutio
 | opinion_id | TEXT     | FK → opinions              | NULL if human wrote a custom conclusion  |
 | content    | TEXT     | NOT NULL                   | Checkpoint content (JSON text, see below)|
 | created_at | DATETIME | NOT NULL                   | Checkpoint timestamp (UTC)               |
+
+**Cross-topic integrity**: The `opinion_id` FK alone does not prevent referencing an opinion from a different topic. The **service layer must validate** that `opinion.topic_id == checkpoint.topic_id` before inserting a checkpoint. This is enforced in `packages/core/src/services/` — if the opinion does not belong to the same topic, the operation is rejected with an error.
 
 When an agent calls `arena pop`, it receives the **latest checkpoint** (by `created_at DESC LIMIT 1`) for the current topic. If no checkpoint exists, pop returns exit code 1 with a pending status.
 
@@ -399,7 +399,6 @@ Opinions are always sorted by `created_at` ascending (chronological order).
   - **New topic** — manually create a new topic for this project + branch
 - Set checkpoint button to confirm the human's decision
 - Show checkpoint history (all past checkpoints for this topic)
-- Topic never closes — new opinions and checkpoints can always be added
 
 ## Project Structure
 
