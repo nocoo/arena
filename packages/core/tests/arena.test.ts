@@ -493,6 +493,47 @@ describe("createCheckpoint", () => {
   });
 });
 
+describe("concurrency", () => {
+  it("parallel pushes to same project+branch create only one topic", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "arena-test-"));
+    const dbPath = join(dir, "test.db");
+    initSchema(dbPath);
+
+    // Create multiple independent DB connections to simulate concurrent agents
+    const connections = Array.from({ length: 5 }, () => createDatabase(dbPath));
+
+    // Fire all pushes concurrently
+    const results = await Promise.all(
+      connections.map((db, i) =>
+        Promise.resolve(
+          push(db, {
+            agentName: `Agent-${i}`,
+            model: "test-model",
+            content: `Opinion from agent ${i}`,
+            projectPath: "/Users/test/concurrent-project",
+            branch: "main",
+          }),
+        ),
+      ),
+    );
+
+    // All should succeed
+    for (const r of results) {
+      expect(r.ok).toBe(true);
+    }
+
+    // All should share the same topic
+    const topicIds = new Set(results.map((r) => r.topic_id));
+    expect(topicIds.size).toBe(1);
+
+    // Should have 5 distinct opinions
+    const opinionIds = new Set(results.map((r) => r.opinion_id));
+    expect(opinionIds.size).toBe(5);
+
+    rmSync(dir, { recursive: true, force: true });
+  });
+});
+
 describe("schema initialization", () => {
   it("initSchema is idempotent", () => {
     const dir = mkdtempSync(join(tmpdir(), "arena-test-"));
