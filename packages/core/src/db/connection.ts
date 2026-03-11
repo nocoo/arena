@@ -35,12 +35,16 @@ function openDatabase(dbPath: string): ArenaDb {
 
   if (isBun) {
     // Dynamic require to avoid bundler static analysis (Next.js/Turbopack)
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { Database } = require("bun:sqlite");
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { drizzle } = require("drizzle-orm/bun-sqlite");
     sqlite = new Database(dbPath);
     orm = drizzle(sqlite, { schema });
   } else {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const Database = require("better-sqlite3");
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { drizzle } = require("drizzle-orm/better-sqlite3");
     sqlite = new Database(dbPath);
     orm = drizzle(sqlite, { schema });
@@ -62,9 +66,11 @@ export function initSchema(dbPath: string = DEFAULT_DB_PATH) {
   let sqlite: RawDatabase;
 
   if (isBun) {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { Database } = require("bun:sqlite");
     sqlite = new Database(dbPath);
   } else {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const Database = require("better-sqlite3");
     sqlite = new Database(dbPath);
   }
