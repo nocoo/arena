@@ -21,22 +21,22 @@ export interface TopicWithCounts {
 }
 
 export function getProjects(): ProjectWithStats[] {
-  const db = getDb();
+  const { orm } = getDb();
 
-  const projects = db
+  const projects = orm
     .select()
     .from(schema.projects)
     .orderBy(desc(schema.projects.createdAt))
     .all();
 
   return projects.map((p) => {
-    const topicStats = db
+    const topicStats = orm
       .select({ value: count() })
       .from(schema.topics)
       .where(eq(schema.topics.projectId, p.id))
       .get();
 
-    const latestTopic = db
+    const latestTopic = orm
       .select()
       .from(schema.topics)
       .where(eq(schema.topics.projectId, p.id))
@@ -55,9 +55,9 @@ export function getProjects(): ProjectWithStats[] {
 }
 
 export function getTopicsForProject(projectId: string): TopicWithCounts[] {
-  const db = getDb();
+  const { orm } = getDb();
 
-  const topics = db
+  const topics = orm
     .select()
     .from(schema.topics)
     .where(eq(schema.topics.projectId, projectId))
@@ -65,13 +65,13 @@ export function getTopicsForProject(projectId: string): TopicWithCounts[] {
     .all();
 
   return topics.map((t) => {
-    const opinionStats = db
+    const opinionStats = orm
       .select({ value: count() })
       .from(schema.opinions)
       .where(eq(schema.opinions.topicId, t.id))
       .get();
 
-    const checkpointStats = db
+    const checkpointStats = orm
       .select({ value: count() })
       .from(schema.checkpoints)
       .where(eq(schema.checkpoints.topicId, t.id))
@@ -111,9 +111,9 @@ export interface TopicDetail {
 }
 
 export function getTopicDetail(topicId: string): TopicDetail | null {
-  const db = getDb();
+  const { orm } = getDb();
 
-  const topic = db
+  const topic = orm
     .select()
     .from(schema.topics)
     .where(eq(schema.topics.id, topicId))
@@ -121,14 +121,14 @@ export function getTopicDetail(topicId: string): TopicDetail | null {
 
   if (!topic) return null;
 
-  const opinions = db
+  const opinions = orm
     .select()
     .from(schema.opinions)
     .where(eq(schema.opinions.topicId, topicId))
     .orderBy(schema.opinions.createdAt)
     .all();
 
-  const checkpoints = db
+  const checkpoints = orm
     .select()
     .from(schema.checkpoints)
     .where(eq(schema.checkpoints.topicId, topicId))

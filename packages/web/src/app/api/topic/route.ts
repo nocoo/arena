@@ -29,7 +29,8 @@ export async function POST(request: Request) {
   }
 
   // Verify project exists
-  const project = getDb()
+  const { orm } = getDb();
+  const project = orm
     .select()
     .from(schema.projects)
     .where(eq(schema.projects.id, projectId))
@@ -42,7 +43,7 @@ export async function POST(request: Request) {
   const topicId = ulid();
   const now = new Date().toISOString();
 
-  getDb()
+  orm
     .insert(schema.topics)
     .values({
       id: topicId,

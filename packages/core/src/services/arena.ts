@@ -1,6 +1,6 @@
 import { monotonicFactory } from "ulid";
 import { eq, and, desc, isNull, count } from "drizzle-orm";
-import type { ArenaDatabase } from "../db/connection.js";
+import type { ArenaDb } from "../db/connection.js";
 import { projects, topics, opinions, checkpoints } from "../db/schema.js";
 import { deriveProjectId, deriveProjectName } from "./project-id.js";
 import type {
@@ -30,7 +30,7 @@ function isToday(utcIso: string): boolean {
  * Returns the project ID.
  */
 function ensureProject(
-  db: ArenaDatabase,
+  db: ArenaDb,
   projectPath: string,
 ): string {
   const projectId = deriveProjectId(projectPath);
@@ -38,7 +38,7 @@ function ensureProject(
   const now = new Date().toISOString();
 
   // Insert or ignore (idempotent)
-  db.insert(projects)
+  db.orm.insert(projects)
     .values({ id: projectId, name: projectName, createdAt: now })
     .onConflictDoNothing()
     .run();
@@ -50,56 +50,64 @@ function ensureProject(
  * Find or create today's topic for a project + branch.
  *
  * Uses SQLite BEGIN IMMEDIATE to prevent duplicate topic creation
- * by concurrent agents.
+ * by concurrent agents. The IMMEDIATE lock ensures only one writer
+ * can execute the select+insert atomically.
  */
 function findOrCreateTopic(
-  db: ArenaDatabase,
+  db: ArenaDb,
   projectId: string,
   branch: string | null,
 ): string {
-  // We need raw SQL transaction with BEGIN IMMEDIATE
-  // Drizzle's transaction API doesn't support IMMEDIATE mode,
-  // so we use the underlying better-sqlite3 directly.
+  // BEGIN IMMEDIATE acquires a RESERVED lock immediately, preventing
+  // concurrent writers from interleaving their select+insert.
+  db.sqlite.exec("BEGIN IMMEDIATE");
 
-  // Find today's most recent topic for this project + branch
-  const branchCondition =
-    branch === null
-      ? isNull(topics.branch)
-      : eq(topics.branch, branch);
+  try {
+    // Find today's most recent topic for this project + branch
+    const branchCondition =
+      branch === null
+        ? isNull(topics.branch)
+        : eq(topics.branch, branch);
 
-  const existing = db
-    .select()
-    .from(topics)
-    .where(and(eq(topics.projectId, projectId), branchCondition))
-    .orderBy(desc(topics.createdAt), desc(topics.id))
-    .limit(1)
-    .all();
+    const existing = db.orm
+      .select()
+      .from(topics)
+      .where(and(eq(topics.projectId, projectId), branchCondition))
+      .orderBy(desc(topics.createdAt), desc(topics.id))
+      .limit(1)
+      .all();
 
-  if (existing.length > 0 && isToday(existing[0]!.createdAt)) {
-    return existing[0]!.id;
+    if (existing.length > 0 && isToday(existing[0]!.createdAt)) {
+      db.sqlite.exec("COMMIT");
+      return existing[0]!.id;
+    }
+
+    // Create new topic
+    const topicId = ulid();
+    const now = new Date().toISOString();
+
+    db.orm.insert(topics)
+      .values({
+        id: topicId,
+        projectId,
+        branch,
+        createdAt: now,
+      })
+      .run();
+
+    db.sqlite.exec("COMMIT");
+    return topicId;
+  } catch (err) {
+    db.sqlite.exec("ROLLBACK");
+    throw err;
   }
-
-  // Create new topic
-  const topicId = ulid();
-  const now = new Date().toISOString();
-
-  db.insert(topics)
-    .values({
-      id: topicId,
-      projectId,
-      branch,
-      createdAt: now,
-    })
-    .run();
-
-  return topicId;
 }
 
 /**
  * Push an opinion into the current topic.
  */
 export function push(
-  db: ArenaDatabase,
+  db: ArenaDb,
   params: {
     agentName: string;
     model: string;
@@ -114,7 +122,7 @@ export function push(
   const opinionId = ulid();
   const now = new Date().toISOString();
 
-  db.insert(opinions)
+  db.orm.insert(opinions)
     .values({
       id: opinionId,
       topicId,
@@ -125,7 +133,7 @@ export function push(
     })
     .run();
 
-  const topic = db
+  const topic = db.orm
     .select()
     .from(topics)
     .where(eq(topics.id, topicId))
@@ -149,7 +157,7 @@ export function push(
  * Pop the latest checkpoint for the current topic.
  */
 export function pop(
-  db: ArenaDatabase,
+  db: ArenaDb,
   params: {
     projectPath: string;
     branch: string | null;
@@ -157,13 +165,13 @@ export function pop(
 ): PopResult {
   const projectId = deriveProjectId(params.projectPath);
 
-  // Find today's topic
+  // Find the most recent topic for this project + branch
   const branchCondition =
     params.branch === null
       ? isNull(topics.branch)
       : eq(topics.branch, params.branch);
 
-  const topic = db
+  const topic = db.orm
     .select()
     .from(topics)
     .where(and(eq(topics.projectId, projectId), branchCondition))
@@ -180,7 +188,7 @@ export function pop(
   }
 
   // Find latest checkpoint for this topic
-  const checkpoint = db
+  const checkpoint = db.orm
     .select()
     .from(checkpoints)
     .where(eq(checkpoints.topicId, topic.id))
@@ -190,7 +198,7 @@ export function pop(
 
   if (!checkpoint) {
     // Count opinions
-    const result = db
+    const result = db.orm
       .select({ value: count() })
       .from(opinions)
       .where(eq(opinions.topicId, topic.id))
@@ -231,7 +239,7 @@ export function pop(
  * Get the status of the current project and topic.
  */
 export function status(
-  db: ArenaDatabase,
+  db: ArenaDb,
   params: {
     projectPath: string;
     branch: string | null;
@@ -246,7 +254,7 @@ export function status(
       ? isNull(topics.branch)
       : eq(topics.branch, params.branch);
 
-  const topic = db
+  const topic = db.orm
     .select()
     .from(topics)
     .where(and(eq(topics.projectId, projectId), branchCondition))
@@ -263,7 +271,7 @@ export function status(
   }
 
   // Get opinions sorted chronologically
-  const topicOpinions = db
+  const topicOpinions = db.orm
     .select()
     .from(opinions)
     .where(eq(opinions.topicId, topic.id))
@@ -271,7 +279,7 @@ export function status(
     .all();
 
   // Get latest checkpoint
-  const latestCheckpoint = db
+  const latestCheckpoint = db.orm
     .select()
     .from(checkpoints)
     .where(eq(checkpoints.topicId, topic.id))
@@ -326,7 +334,7 @@ export function status(
  * Validates that opinion_id (if provided) belongs to the same topic.
  */
 export function createCheckpoint(
-  db: ArenaDatabase,
+  db: ArenaDb,
   params: {
     topicId: string;
     opinionId?: string | null;
@@ -334,7 +342,7 @@ export function createCheckpoint(
   },
 ): { ok: true; checkpoint_id: string } | { ok: false; error: string } {
   // Validate topic exists
-  const topic = db
+  const topic = db.orm
     .select()
     .from(topics)
     .where(eq(topics.id, params.topicId))
@@ -346,7 +354,7 @@ export function createCheckpoint(
 
   // Cross-topic integrity check
   if (params.opinionId) {
-    const opinion = db
+    const opinion = db.orm
       .select()
       .from(opinions)
       .where(eq(opinions.id, params.opinionId))
@@ -367,7 +375,7 @@ export function createCheckpoint(
   const checkpointId = ulid();
   const now = new Date().toISOString();
 
-  db.insert(checkpoints)
+  db.orm.insert(checkpoints)
     .values({
       id: checkpointId,
       topicId: params.topicId,

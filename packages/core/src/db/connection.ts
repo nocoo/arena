@@ -1,3 +1,4 @@
+import { dirname } from "node:path";
 import { join } from "node:path";
 import { homedir } from "node:os";
 import { mkdirSync } from "node:fs";
@@ -8,11 +9,18 @@ import * as schema from "./schema.js";
 const ARENA_DIR = join(homedir(), ".arena");
 const DEFAULT_DB_PATH = join(ARENA_DIR, "arena.db");
 
-export type ArenaDatabase = ReturnType<typeof createDatabase>;
+export type ArenaDatabase = ReturnType<typeof drizzle<typeof schema>>;
 
-export function createDatabase(dbPath: string = DEFAULT_DB_PATH) {
-  // Ensure directory exists
-  const dir = dbPath.substring(0, dbPath.lastIndexOf("/"));
+export interface ArenaDb {
+  /** Drizzle ORM instance for typed queries */
+  orm: ArenaDatabase;
+  /** Raw better-sqlite3 instance for transactions and pragmas */
+  sqlite: InstanceType<typeof Database>;
+}
+
+export function createDatabase(dbPath: string = DEFAULT_DB_PATH): ArenaDb {
+  // Use path.dirname() for cross-platform directory extraction
+  const dir = dirname(dbPath);
   if (dir) {
     mkdirSync(dir, { recursive: true });
   }
@@ -24,13 +32,13 @@ export function createDatabase(dbPath: string = DEFAULT_DB_PATH) {
   // Enable foreign keys
   sqlite.pragma("foreign_keys = ON");
 
-  const db = drizzle(sqlite, { schema });
+  const orm = drizzle(sqlite, { schema });
 
-  return db;
+  return { orm, sqlite };
 }
 
 export function initSchema(dbPath: string = DEFAULT_DB_PATH) {
-  const dir = dbPath.substring(0, dbPath.lastIndexOf("/"));
+  const dir = dirname(dbPath);
   if (dir) {
     mkdirSync(dir, { recursive: true });
   }

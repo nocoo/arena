@@ -1,5 +1,5 @@
 export { createDatabase, initSchema, schema } from "./db/index.js";
-export type { ArenaDatabase } from "./db/index.js";
+export type { ArenaDatabase, ArenaDb } from "./db/index.js";
 export {
   push,
   pop,
