@@ -25,6 +25,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import Markdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import type { TopicDetail } from "@/lib/data";
 
 interface TopicViewProps {
@@ -208,8 +210,10 @@ export function TopicView({ topic }: TopicViewProps) {
                         {formatTime(opinion.createdAt)}
                       </span>
                     </div>
-                    <div className="text-sm text-foreground/90 whitespace-pre-wrap break-words">
-                      {opinion.content}
+                    <div className="text-sm text-foreground/90 break-words prose prose-sm prose-neutral dark:prose-invert max-w-none">
+                      <Markdown remarkPlugins={[remarkGfm]}>
+                        {opinion.content}
+                      </Markdown>
                     </div>
                     <div className="mt-3 flex gap-2">
                       <Button
