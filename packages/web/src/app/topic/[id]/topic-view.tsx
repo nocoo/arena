@@ -14,7 +14,6 @@ import {
   Clock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
@@ -113,175 +112,172 @@ export function TopicView({ topic }: TopicViewProps) {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="sticky top-0 z-40 border-b bg-background/80 backdrop-blur-sm">
-        <div className="mx-auto flex h-14 max-w-4xl items-center gap-3 px-6">
-          <Link href="/">
-            <Button variant="ghost" size="icon-sm">
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-          </Link>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2">
-              {topic.title && (
-                <span className="font-medium truncate">{topic.title}</span>
-              )}
-              {topic.branch && (
-                <Badge variant="secondary" className="shrink-0">
-                  <GitBranch className="h-3 w-3" />
-                  {topic.branch}
-                </Badge>
-              )}
-              <span className="text-xs text-muted-foreground shrink-0">
-                {formatDate(topic.createdAt)}
-              </span>
+    <div>
+      {/* Topic header */}
+      <div className="flex items-center gap-3 mb-6">
+        <Link href="/">
+          <Button variant="ghost" size="icon-sm">
+            <ArrowLeft className="h-4 w-4" strokeWidth={1.5} />
+          </Button>
+        </Link>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            {topic.branch && (
+              <Badge variant="secondary">
+                <GitBranch className="h-3 w-3" strokeWidth={1.5} />
+                {topic.branch}
+              </Badge>
+            )}
+            <span className="text-xs text-muted-foreground shrink-0">
+              {formatDate(topic.createdAt)}
+            </span>
+          </div>
+        </div>
+        <Button variant="outline" size="sm" onClick={createNewTopic}>
+          <Plus className="h-3.5 w-3.5" strokeWidth={1.5} />
+          New Topic
+        </Button>
+      </div>
+
+      {/* Latest checkpoint banner */}
+      {latestCheckpoint && (
+        <div className="mb-6 rounded-card bg-primary/5 border border-primary/20 px-5 py-4">
+          <div className="flex items-start gap-3">
+            <Flag
+              className="h-5 w-5 text-primary shrink-0 mt-0.5"
+              strokeWidth={1.5}
+            />
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-sm font-medium">Latest Checkpoint</span>
+                <span className="text-xs text-muted-foreground">
+                  {formatTime(latestCheckpoint.createdAt)}
+                </span>
+              </div>
+              <CheckpointContentDisplay content={latestCheckpoint.content} />
             </div>
           </div>
-          <Button variant="outline" size="sm" onClick={createNewTopic}>
-            <Plus className="h-3.5 w-3.5" />
-            New Topic
-          </Button>
         </div>
-      </header>
+      )}
 
-      <main className="mx-auto max-w-4xl px-6 py-8">
-        {/* Latest checkpoint banner */}
-        {latestCheckpoint && (
-          <Card className="mb-8 border-primary/30 bg-primary/5">
-            <CardContent className="pt-6">
-              <div className="flex items-start gap-3">
-                <Flag className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="text-sm font-medium">
-                      Latest Checkpoint
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                      {formatTime(latestCheckpoint.createdAt)}
-                    </span>
+      {/* Opinions section */}
+      <div className="mb-4 flex items-center justify-between">
+        <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
+          Opinions ({topic.opinions.length})
+        </h2>
+        <Button
+          variant="default"
+          size="sm"
+          onClick={() => openCheckpointDialog(null, "")}
+        >
+          <PenLine className="h-3.5 w-3.5" strokeWidth={1.5} />
+          Write Checkpoint
+        </Button>
+      </div>
+
+      {topic.opinions.length === 0 ? (
+        <div className="rounded-card bg-secondary border-0 shadow-none py-12 text-center text-sm text-muted-foreground">
+          No opinions yet. Agents will push opinions via the CLI.
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {topic.opinions.map((opinion, index) => (
+            <div key={opinion.id}>
+              {/* Opinion card */}
+              <div className="rounded-card bg-secondary border-0 shadow-none px-5 py-4">
+                <div className="flex items-start gap-3">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-accent shrink-0">
+                    <Bot
+                      className="h-4 w-4 text-muted-foreground"
+                      strokeWidth={1.5}
+                    />
                   </div>
-                  <CheckpointContentDisplay content={latestCheckpoint.content} />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-sm font-medium">
+                        {opinion.agentName}
+                      </span>
+                      <Badge
+                        variant="outline"
+                        className="text-[10px] px-1.5 py-0"
+                      >
+                        {opinion.model}
+                      </Badge>
+                      <span className="flex items-center gap-1 text-xs text-muted-foreground ml-auto shrink-0">
+                        <Clock className="h-3 w-3" strokeWidth={1.5} />
+                        {formatTime(opinion.createdAt)}
+                      </span>
+                    </div>
+                    <div className="text-sm text-foreground/90 whitespace-pre-wrap break-words">
+                      {opinion.content}
+                    </div>
+                    <div className="mt-3 flex gap-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() =>
+                          openCheckpointDialog(opinion.id, opinion.content)
+                        }
+                        className="text-xs"
+                      >
+                        <CheckCircle2 className="h-3.5 w-3.5" strokeWidth={1.5} />
+                        Choose this
+                      </Button>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </CardContent>
-          </Card>
-        )}
 
-        {/* Opinions timeline */}
-        <div className="mb-6 flex items-center justify-between">
-          <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
-            Opinions ({topic.opinions.length})
-          </h2>
-          <Button
-            variant="default"
-            size="sm"
-            onClick={() => openCheckpointDialog(null, "")}
-          >
-            <PenLine className="h-3.5 w-3.5" />
-            Write Checkpoint
-          </Button>
+              {/* Interspersed checkpoints */}
+              {renderInterspersedCheckpoints(
+                topic.checkpoints,
+                opinion.createdAt,
+                topic.opinions[index + 1]?.createdAt ?? null,
+              )}
+            </div>
+          ))}
         </div>
+      )}
 
-        {topic.opinions.length === 0 ? (
-          <div className="rounded-lg border border-dashed py-12 text-center text-sm text-muted-foreground">
-            No opinions yet. Agents will push opinions via the CLI.
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {topic.opinions.map((opinion, index) => (
-              <div key={opinion.id}>
-                <Card className="py-0">
-                  <CardContent className="py-4">
-                    <div className="flex items-start gap-3">
-                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-secondary shrink-0">
-                        <Bot className="h-4 w-4 text-muted-foreground" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-2">
-                          <span className="text-sm font-medium">
-                            {opinion.agentName}
-                          </span>
-                          <Badge variant="outline" className="text-[10px] px-1.5 py-0">
-                            {opinion.model}
-                          </Badge>
-                          <span className="flex items-center gap-1 text-xs text-muted-foreground ml-auto shrink-0">
-                            <Clock className="h-3 w-3" />
-                            {formatTime(opinion.createdAt)}
-                          </span>
-                        </div>
-                        <div className="text-sm text-foreground/90 whitespace-pre-wrap break-words">
-                          {opinion.content}
-                        </div>
-                        <div className="mt-3 flex gap-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() =>
-                              openCheckpointDialog(opinion.id, opinion.content)
-                            }
-                            className="text-xs"
-                          >
-                            <CheckCircle2 className="h-3.5 w-3.5" />
-                            Choose this
-                          </Button>
-                        </div>
-                      </div>
+      {/* Checkpoint history */}
+      {topic.checkpoints.length > 1 && (
+        <>
+          <Separator className="my-8" />
+          <h2 className="mb-4 text-sm font-medium text-muted-foreground uppercase tracking-wider">
+            Checkpoint History ({topic.checkpoints.length})
+          </h2>
+          <div className="space-y-3">
+            {topic.checkpoints.map((cp, i) => (
+              <div
+                key={cp.id}
+                className="rounded-card bg-secondary border-0 shadow-none px-5 py-3"
+              >
+                <div className="flex items-start gap-3">
+                  <Flag
+                    className={`h-4 w-4 shrink-0 mt-0.5 ${
+                      i === 0 ? "text-primary" : "text-muted-foreground"
+                    }`}
+                    strokeWidth={1.5}
+                  />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      {i === 0 && (
+                        <Badge variant="default" className="text-[10px]">
+                          Latest
+                        </Badge>
+                      )}
+                      <span className="text-xs text-muted-foreground">
+                        {formatTime(cp.createdAt)}
+                      </span>
                     </div>
-                  </CardContent>
-                </Card>
-
-                {/* Show checkpoints that were set between opinions */}
-                {renderInterspersedCheckpoints(
-                  topic.checkpoints,
-                  opinion.createdAt,
-                  topic.opinions[index + 1]?.createdAt ?? null
-                )}
+                    <CheckpointContentDisplay content={cp.content} />
+                  </div>
+                </div>
               </div>
             ))}
           </div>
-        )}
-
-        {/* Checkpoint history */}
-        {topic.checkpoints.length > 1 && (
-          <>
-            <Separator className="my-8" />
-            <h2 className="mb-4 text-sm font-medium text-muted-foreground uppercase tracking-wider">
-              Checkpoint History ({topic.checkpoints.length})
-            </h2>
-            <div className="space-y-3">
-              {topic.checkpoints.map((cp, i) => (
-                <Card key={cp.id} className="py-0">
-                  <CardContent className="py-3">
-                    <div className="flex items-start gap-3">
-                      <Flag
-                        className={`h-4 w-4 shrink-0 mt-0.5 ${
-                          i === 0
-                            ? "text-primary"
-                            : "text-muted-foreground"
-                        }`}
-                      />
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          {i === 0 && (
-                            <Badge variant="default" className="text-[10px]">
-                              Latest
-                            </Badge>
-                          )}
-                          <span className="text-xs text-muted-foreground">
-                            {formatTime(cp.createdAt)}
-                          </span>
-                        </div>
-                        <CheckpointContentDisplay content={cp.content} />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </>
-        )}
-      </main>
+        </>
+      )}
 
       {/* Checkpoint creation dialog */}
       <Dialog
@@ -309,7 +305,7 @@ export function TopicView({ topic }: TopicViewProps) {
                 value={decision}
                 onChange={(e) => setDecision(e.target.value)}
                 placeholder="The core decision or instruction..."
-                className="min-h-24"
+                className="min-h-24 rounded-widget"
               />
             </div>
             <div>
@@ -320,7 +316,7 @@ export function TopicView({ topic }: TopicViewProps) {
                 value={reasoning}
                 onChange={(e) => setReasoning(e.target.value)}
                 placeholder="Why this decision was made..."
-                className="min-h-16"
+                className="min-h-16 rounded-widget"
               />
             </div>
             <div>
@@ -330,8 +326,10 @@ export function TopicView({ topic }: TopicViewProps) {
               <Textarea
                 value={actions}
                 onChange={(e) => setActions(e.target.value)}
-                placeholder={"Refactor UserService to use Redis\nAdd cache invalidation on write"}
-                className="min-h-16"
+                placeholder={
+                  "Refactor UserService to use Redis\nAdd cache invalidation on write"
+                }
+                className="min-h-16 rounded-widget"
               />
             </div>
           </div>
@@ -340,7 +338,11 @@ export function TopicView({ topic }: TopicViewProps) {
             <Button
               variant="outline"
               onClick={() =>
-                setCheckpointDialog({ open: false, opinionId: null, prefill: "" })
+                setCheckpointDialog({
+                  open: false,
+                  opinionId: null,
+                  prefill: "",
+                })
               }
             >
               Cancel
@@ -386,7 +388,7 @@ function CheckpointContentDisplay({ content }: { content: string }) {
 function renderInterspersedCheckpoints(
   checkpoints: TopicDetail["checkpoints"],
   afterTime: string,
-  beforeTime: string | null
+  beforeTime: string | null,
 ) {
   const relevant = checkpoints.filter((cp) => {
     const cpTime = cp.createdAt;
@@ -400,9 +402,12 @@ function renderInterspersedCheckpoints(
       {relevant.map((cp) => (
         <div
           key={cp.id}
-          className="flex items-start gap-2 rounded-lg bg-primary/5 border border-primary/20 px-3 py-2"
+          className="flex items-start gap-2 rounded-widget bg-primary/5 border border-primary/20 px-3 py-2"
         >
-          <Flag className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" />
+          <Flag
+            className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5"
+            strokeWidth={1.5}
+          />
           <div className="flex-1 min-w-0">
             <div className="text-xs text-muted-foreground mb-0.5">
               Checkpoint set at {formatTime(cp.createdAt)}

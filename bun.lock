@@ -71,6 +71,7 @@
     },
   },
   "trustedDependencies": [
+    "better-sqlite3",
     "esbuild",
     "unrs-resolver",
   ],

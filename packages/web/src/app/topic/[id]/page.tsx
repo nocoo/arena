@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getTopicDetail } from "@/lib/data";
 import { notFound } from "next/navigation";
 import { TopicView } from "./topic-view";
+import { AppShell } from "@/components/layout/app-shell";
 
 export const dynamic = "force-dynamic";
 
@@ -22,5 +23,9 @@ export default async function TopicPage({
     notFound();
   }
 
-  return <TopicView topic={topic} />;
+  return (
+    <AppShell title={topic.title || "Topic"}>
+      <TopicView topic={topic} />
+    </AppShell>
+  );
 }
