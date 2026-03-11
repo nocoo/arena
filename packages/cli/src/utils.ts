@@ -11,7 +11,9 @@ export function detectBranch(cwd: string): string | null {
       stdio: ["pipe", "pipe", "pipe"],
       encoding: "utf-8",
     }).trim();
-    return branch || null;
+    // In detached HEAD state, git returns literal "HEAD"
+    if (!branch || branch === "HEAD") return null;
+    return branch;
   } catch {
     return null;
   }
