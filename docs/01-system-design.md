@@ -34,6 +34,44 @@ Arena is a local debate-and-ruling platform for AI coding agents. Multiple agent
 
 ## Data Model
 
+### Project ID Generation
+
+The CLI auto-detects its current working directory (CWD) and derives the Project ID deterministically:
+
+1. Replace all `/` and `\` with `-`
+2. Convert to lowercase
+3. Strip leading `-`
+
+**Examples**:
+
+| CWD                                      | Project ID                              |
+|------------------------------------------|-----------------------------------------|
+| `/Users/nocoo/workspace/personal/arena`  | `users-nocoo-workspace-personal-arena`  |
+| `/Users/nocoo/workspace/work/studio`     | `users-nocoo-workspace-work-studio`     |
+| `C:\Users\dev\projects\app`              | `c-users-dev-projects-app`              |
+
+All projects are assumed to be Git-managed.
+
+### Topic Grouping Rules
+
+A **topic** is the unit of debate within a project. Topics are created automatically or manually:
+
+1. **Branch isolation** — Different branches always belong to different topics
+2. **Daily rotation** — Within the same project + branch, a new topic is created each calendar day (based on the system's local timezone)
+3. **Manual creation** — Users can create a new topic at any time via the Web Dashboard, which closes the current one
+
+**Lookup algorithm** when an agent pushes:
+
+```
+Given: project_id + branch
+1. Find the most recent 'open' topic where:
+   - topic.project_id == project_id
+   - topic.branch == branch
+   - topic.created_at is on the same calendar day (local timezone) as now
+2. If found → attach opinion to that topic
+3. If not found → create a new topic, then attach
+```
+
 ### Entity Relationship
 
 ```
@@ -46,26 +84,27 @@ projects 1──N topics 1──N opinions
 
 #### projects
 
-| Column     | Type     | Constraints       | Description             |
-|------------|----------|-------------------|-------------------------|
-| id         | TEXT     | PK (ULID)         | Unique identifier       |
-| path       | TEXT     | UNIQUE, NOT NULL  | Absolute project path   |
-| name       | TEXT     | NOT NULL          | Friendly project name   |
-| created_at | DATETIME | NOT NULL          | Creation timestamp      |
+| Column     | Type     | Constraints       | Description                                |
+|------------|----------|-------------------|--------------------------------------------|
+| id         | TEXT     | PK                | Derived from CWD path (see algorithm above)|
+| name       | TEXT     | NOT NULL          | Last segment of path (e.g. "arena")        |
+| created_at | DATETIME | NOT NULL          | First time this project was seen           |
+
+The `id` is deterministic — the same directory always produces the same ID. No ULID needed.
 
 #### topics
 
-| Column      | Type     | Constraints           | Description                  |
-|-------------|----------|-----------------------|------------------------------|
-| id          | TEXT     | PK (ULID)             | Unique identifier            |
-| project_id  | TEXT     | FK → projects, NOT NULL | Parent project             |
-| branch      | TEXT     | NOT NULL              | Git branch name              |
-| title       | TEXT     |                       | Optional, user-editable      |
-| status      | TEXT     | NOT NULL, DEFAULT 'open' | open / resolved / archived |
-| created_at  | DATETIME | NOT NULL              | Creation timestamp           |
-| resolved_at | DATETIME |                       | When resolution was made     |
+| Column      | Type     | Constraints              | Description                  |
+|-------------|----------|--------------------------|------------------------------|
+| id          | TEXT     | PK (ULID)                | Unique identifier            |
+| project_id  | TEXT     | FK → projects, NOT NULL  | Parent project               |
+| branch      | TEXT     | NOT NULL                 | Git branch name              |
+| title       | TEXT     |                          | Optional, user-editable      |
+| status      | TEXT     | NOT NULL, DEFAULT 'open' | open / resolved / archived   |
+| created_at  | DATETIME | NOT NULL                 | Creation timestamp           |
+| resolved_at | DATETIME |                          | When resolution was made     |
 
-**Auto-grouping rule**: When an agent pushes an opinion for a given project + branch, the system finds the most recent `open` topic created within the last 24 hours. If found, the opinion joins that topic. Otherwise, a new topic is created.
+**Uniqueness**: There should be at most one `open` topic per project + branch at any time. When a new topic is created (by daily rotation or manual action), the previous one is automatically archived.
 
 #### opinions
 
@@ -78,6 +117,8 @@ projects 1──N topics 1──N opinions
 | content    | TEXT     | NOT NULL                 | Markdown opinion body     |
 | created_at | DATETIME | NOT NULL                 | Submission timestamp      |
 
+A single agent can push **multiple opinions** to the same topic (multi-round debate). Each push creates a new opinion row. The Web Dashboard displays all opinions in chronological order.
+
 #### resolutions
 
 | Column            | Type     | Constraints           | Description                    |
@@ -85,14 +126,25 @@ projects 1──N topics 1──N opinions
 | id                | TEXT     | PK (ULID)             | Unique identifier              |
 | topic_id          | TEXT     | FK → topics, UNIQUE   | 1:1 relationship with topic    |
 | chosen_opinion_id | TEXT     | FK → opinions         | NULL if custom resolution      |
-| content           | TEXT     | NOT NULL              | Final ruling content           |
+| content           | TEXT     | NOT NULL              | Final ruling content (JSON)    |
 | created_at        | DATETIME | NOT NULL              | Resolution timestamp           |
+
+The resolution `content` is a JSON string, allowing structured data that agents can parse programmatically.
 
 ## CLI Design
 
 ### Database Location
 
 `~/.arena/arena.db` — shared across all projects on the machine.
+
+### Automatic Context Detection
+
+The CLI auto-detects from the environment:
+
+- **Project** — derived from `process.cwd()` using the Project ID algorithm
+- **Branch** — derived from `git rev-parse --abbrev-ref HEAD` in the CWD
+
+Both can be overridden with explicit flags if needed (e.g. in CI or non-standard setups).
 
 ### Commands
 
@@ -101,29 +153,37 @@ projects 1──N topics 1──N opinions
 ```bash
 # Via --content flag (short text)
 arena push \
-  --project /path/to/project \
-  --branch feat/new-feature \
   --agent "OpenCode" \
   --model "Claude Opus 4.6" \
   --content "I think we should use approach A because..."
 
 # Via stdin pipe (long markdown)
 cat opinion.md | arena push \
+  --agent "OpenCode" \
+  --model "Claude Opus 4.6"
+
+# With explicit overrides (optional)
+arena push \
   --project /path/to/project \
   --branch feat/new-feature \
   --agent "OpenCode" \
-  --model "Claude Opus 4.6"
+  --model "Claude Opus 4.6" \
+  --content "..."
 ```
 
-**Required parameters**:
+**Parameters**:
 
-| Parameter   | Flag        | Description                          |
-|-------------|-------------|--------------------------------------|
-| project     | `--project` | Absolute path to the project         |
-| branch      | `--branch`  | Current git branch                   |
-| agent_name  | `--agent`   | AI agent product name                |
-| model       | `--model`   | AI model identifier                  |
-| content     | `--content` | Opinion body (or stdin)              |
+| Parameter  | Flag        | Required | Default              | Description               |
+|------------|-------------|----------|----------------------|---------------------------|
+| agent_name | `--agent`   | Yes      |                      | AI agent product name     |
+| model      | `--model`   | Yes      |                      | AI model identifier       |
+| content    | `--content` | Yes*     | stdin if omitted     | Opinion body (Markdown)   |
+| project    | `--project` | No       | CWD                  | Override project path     |
+| branch     | `--branch`  | No       | `git` current branch | Override branch name      |
+
+\* Content is required — either via `--content` flag or stdin. If neither is provided, the CLI errors.
+
+An agent can push **multiple times** to the same topic. Each push creates a new opinion. This supports multi-round debate where agents refine their positions over several iterations.
 
 **Success output** (exit code 0):
 
@@ -132,8 +192,8 @@ cat opinion.md | arena push \
   "ok": true,
   "opinion_id": "01JQ...",
   "topic_id": "01JQ...",
-  "project_id": "01JQ...",
-  "message": "Opinion submitted to topic 'feat/new-feature'"
+  "project_id": "users-nocoo-workspace-personal-myapp",
+  "message": "Opinion submitted to topic 'feat/new-feature' (2026-03-11)"
 }
 ```
 
@@ -149,10 +209,14 @@ cat opinion.md | arena push \
 #### `arena pop` — Agent retrieves the resolution
 
 ```bash
-arena pop \
-  --project /path/to/project \
-  --branch feat/new-feature
+# Auto-detect project and branch from CWD
+arena pop
+
+# With explicit overrides
+arena pop --project /path/to/project --branch feat/new-feature
 ```
+
+**Pop is idempotent**: Once a resolution exists for a topic, every agent calling `pop` for that project + branch gets the exact same result. The resolution is never consumed or removed.
 
 **Resolution available** (exit code 0):
 
@@ -162,7 +226,7 @@ arena pop \
   "resolution": {
     "id": "01JQ...",
     "topic_id": "01JQ...",
-    "content": "Use approach A because...",
+    "content": { "decision": "Use approach A", "reasoning": "..." },
     "chosen_opinion_id": "01JQ...",
     "created_at": "2026-03-11T10:30:00Z"
   }
@@ -194,6 +258,10 @@ arena pop \
 #### `arena status` — View current state
 
 ```bash
+# Auto-detect project and branch from CWD
+arena status
+
+# With explicit overrides
 arena status --project /path/to/project --branch feat/new-feature
 ```
 
@@ -203,9 +271,8 @@ arena status --project /path/to/project --branch feat/new-feature
 {
   "ok": true,
   "project": {
-    "id": "01JQ...",
-    "name": "my-app",
-    "path": "/path/to/project"
+    "id": "users-nocoo-workspace-personal-myapp",
+    "name": "myapp"
   },
   "topic": {
     "id": "01JQ...",
@@ -219,6 +286,20 @@ arena status --project /path/to/project --branch feat/new-feature
         "model": "Claude Opus 4.6",
         "content": "I think...",
         "created_at": "2026-03-11T09:05:00Z"
+      },
+      {
+        "id": "01JQ...",
+        "agent_name": "OpenCode",
+        "model": "Claude Opus 4.6",
+        "content": "After further consideration...",
+        "created_at": "2026-03-11T09:30:00Z"
+      },
+      {
+        "id": "01JQ...",
+        "agent_name": "Cursor",
+        "model": "GPT-4o",
+        "content": "I disagree because...",
+        "created_at": "2026-03-11T09:15:00Z"
       }
     ],
     "resolution": null
@@ -305,7 +386,7 @@ arena/
 | Core     | TypeScript, Drizzle ORM, better-sqlite3 |
 | Web      | Next.js 15, Tailwind CSS, shadcn/ui, NextAuth.js |
 | Database | SQLite (`~/.arena/arena.db`)        |
-| IDs      | ULID                                |
+| IDs      | ULID (topics, opinions, resolutions), deterministic path-hash (projects) |
 | Monorepo | pnpm workspace                      |
 | Runtime  | Node.js (Bun compatible)            |
 
@@ -321,14 +402,17 @@ arena/
 
 - Implement `push` command with strict parameter validation
 - stdin + `--content` input handling
+- Auto-detect CWD → project ID and git branch
 - Auto-create project if not found
-- Auto-group opinions into topics (24h window rule)
+- Topic grouping: branch isolation + daily rotation (local timezone)
+- Multi-round push support (same agent, multiple opinions)
 - Full test coverage
 
 ### Phase 3 — CLI `arena pop` + `arena status` (TDD)
 
-- Implement `pop` command with proper exit codes
+- Implement `pop` command: idempotent, non-blocking, proper exit codes
 - Implement `status` command
+- Auto-detect CWD and branch (same as push)
 - Full test coverage
 
 ### Phase 4 — Web Dashboard
