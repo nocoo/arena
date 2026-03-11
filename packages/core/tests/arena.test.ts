@@ -534,6 +534,116 @@ describe("concurrency", () => {
   });
 });
 
+describe("pop — edge cases", () => {
+  let ctx: ReturnType<typeof createTestDb>;
+
+  beforeEach(() => {
+    ctx = createTestDb();
+  });
+
+  afterEach(() => {
+    rmSync(ctx.dir, { recursive: true, force: true });
+  });
+
+  it("wraps invalid JSON checkpoint content in { decision: ... }", () => {
+    // Push to create topic
+    const pushResult = push(ctx.db, {
+      agentName: "Test",
+      model: "Test",
+      content: "Opinion",
+      projectPath: "/Users/test/json-edge",
+      branch: "main",
+    });
+
+    // Manually insert a checkpoint with invalid JSON via raw sqlite
+    ctx.db.sqlite.exec(`
+      INSERT INTO checkpoints (id, topic_id, opinion_id, content, created_at)
+      VALUES ('cp-bad-json', '${pushResult.topic_id}', NULL, 'not valid json', '${new Date().toISOString()}')
+    `);
+
+    const result = pop(ctx.db, {
+      projectPath: "/Users/test/json-edge",
+      branch: "main",
+    });
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.checkpoint.content).toEqual({
+        decision: "not valid json",
+      });
+    }
+  });
+});
+
+describe("status — edge cases", () => {
+  let ctx: ReturnType<typeof createTestDb>;
+
+  beforeEach(() => {
+    ctx = createTestDb();
+  });
+
+  afterEach(() => {
+    rmSync(ctx.dir, { recursive: true, force: true });
+  });
+
+  it("wraps invalid JSON checkpoint content in { decision: ... }", () => {
+    // Push to create topic
+    const pushResult = push(ctx.db, {
+      agentName: "Test",
+      model: "Test",
+      content: "Opinion",
+      projectPath: "/Users/test/status-json",
+      branch: "main",
+    });
+
+    // Manually insert a checkpoint with invalid JSON via raw sqlite
+    ctx.db.sqlite.exec(`
+      INSERT INTO checkpoints (id, topic_id, opinion_id, content, created_at)
+      VALUES ('cp-bad-json-2', '${pushResult.topic_id}', NULL, 'plain text checkpoint', '${new Date().toISOString()}')
+    `);
+
+    const result = status(ctx.db, {
+      projectPath: "/Users/test/status-json",
+      branch: "main",
+    });
+
+    expect(result.ok).toBe(true);
+    expect(result.topic!.latest_checkpoint).not.toBeNull();
+    expect(result.topic!.latest_checkpoint!.content).toEqual({
+      decision: "plain text checkpoint",
+    });
+  });
+});
+
+describe("findOrCreateTopic — rollback path", () => {
+  it("rolls back transaction when an error occurs during topic creation", () => {
+    const dir = mkdtempSync(join(tmpdir(), "arena-test-"));
+    const dbPath = join(dir, "test.db");
+    initSchema(dbPath);
+    const db = createDatabase(dbPath);
+
+    // Drop the topics table to force an error inside the
+    // BEGIN IMMEDIATE transaction (after lock is acquired).
+    // ensureProject will succeed (projects table still exists),
+    // but findOrCreateTopic's SELECT on topics will fail.
+    db.sqlite.exec("DROP TABLE checkpoints");
+    db.sqlite.exec("DROP TABLE opinions");
+    db.sqlite.exec("DROP TABLE topics");
+
+    expect(() => {
+      push(db, {
+        agentName: "Test",
+        model: "Test",
+        content: "Should fail",
+        projectPath: "/Users/test/rollback",
+        branch: "main",
+      });
+    }).toThrow();
+
+    rmSync(dir, { recursive: true, force: true });
+  });
+});
+
 describe("schema initialization", () => {
   it("initSchema is idempotent", () => {
     const dir = mkdtempSync(join(tmpdir(), "arena-test-"));

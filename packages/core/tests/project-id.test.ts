@@ -47,4 +47,8 @@ describe("deriveProjectName", () => {
   it("handles single segment", () => {
     expect(deriveProjectName("myproject")).toBe("myproject");
   });
+
+  it("returns input when no segments found (empty string)", () => {
+    expect(deriveProjectName("")).toBe("");
+  });
 });

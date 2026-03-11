@@ -19,11 +19,8 @@ export interface ArenaDb {
 }
 
 export function createDatabase(dbPath: string = DEFAULT_DB_PATH): ArenaDb {
-  // Use path.dirname() for cross-platform directory extraction
-  const dir = dirname(dbPath);
-  if (dir) {
-    mkdirSync(dir, { recursive: true });
-  }
+  // dirname() always returns a non-empty string (at minimum ".")
+  mkdirSync(dirname(dbPath), { recursive: true });
 
   const sqlite = new Database(dbPath);
 
@@ -38,10 +35,8 @@ export function createDatabase(dbPath: string = DEFAULT_DB_PATH): ArenaDb {
 }
 
 export function initSchema(dbPath: string = DEFAULT_DB_PATH) {
-  const dir = dirname(dbPath);
-  if (dir) {
-    mkdirSync(dir, { recursive: true });
-  }
+  // dirname() always returns a non-empty string (at minimum ".")
+  mkdirSync(dirname(dbPath), { recursive: true });
 
   const sqlite = new Database(dbPath);
   sqlite.pragma("journal_mode = WAL");
