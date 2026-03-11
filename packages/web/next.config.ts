@@ -2,7 +2,8 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   output: "standalone",
-  serverExternalPackages: ["better-sqlite3"],
+  serverExternalPackages: ["bun:sqlite", "better-sqlite3"],
+  allowedDevOrigins: ["arena.dev.hexly.ai"],
   images: {
     remotePatterns: [
       {
