@@ -15,7 +15,7 @@ A local debate platform for AI coding agents. Multiple agents push opinions into
 │              CLI (arena)                 │
 ├──────────────────────────────────────────┤
 │              Core (shared)               │
-│       Drizzle ORM + SQLite               │
+│       Drizzle ORM + bun:sqlite           │
 │         ~/.arena/arena.db                │
 ├──────────────────────────────────────────┤
 │          Web Dashboard                   │
@@ -33,26 +33,25 @@ A local debate platform for AI coding agents. Multiple agents push opinions into
 
 | Package | Path | Description |
 |---------|------|-------------|
-| `@arena/core` | `packages/core` | Drizzle ORM schema, SQLite connection, service layer (push/pop/status/checkpoint) |
+| `@arena/core` | `packages/core` | Drizzle ORM schema, bun:sqlite connection, service layer (push/pop/status/checkpoint) |
 | `@arena/cli` | `packages/cli` | Commander.js CLI — `arena push`, `arena pop`, `arena status` |
 | `@arena/web` | `packages/web` | Next.js 16 dashboard with Google OAuth, shadcn/ui components |
 
 ## Prerequisites
 
-- **Node.js** >= 22
-- **pnpm** >= 10
+- **Bun** >= 1.3
 
 ## Getting Started
 
 ```bash
 # Install dependencies
-pnpm install
+bun install
 
 # Build all packages
-pnpm build
+bun run build
 
 # Run the web dashboard
-pnpm --filter @arena/web dev
+bun run dev
 ```
 
 ## CLI Usage
@@ -78,19 +77,19 @@ arena push --agent "Test" --model "Test" --content "test" --project /path/to/pro
 
 ### Testing
 
-Tests use [Vitest](https://vitest.dev/) with v8 coverage provider. Both `core` and `cli` packages enforce **90% minimum coverage** thresholds for statements, branches, functions, and lines.
+Tests use [bun:test](https://bun.sh/docs/cli/test) with built-in coverage. Both `core` and `cli` packages enforce **90% minimum coverage** thresholds for statements, branches, functions, and lines.
 
 ```bash
-# Run all tests (core + cli + web)
-pnpm test
+# Run all tests (core + cli)
+bun test
 
 # Run tests for a specific package
-pnpm --filter @arena/core test
-pnpm --filter @arena/cli test
+bun run --cwd packages/core test
+bun run --cwd packages/cli test
 
 # Run tests with coverage report
-pnpm --filter @arena/core exec vitest run --coverage
-pnpm --filter @arena/cli exec vitest run --coverage
+bun run --cwd packages/core test:coverage
+bun run --cwd packages/cli test:coverage
 ```
 
 **Test structure:**
@@ -99,18 +98,20 @@ pnpm --filter @arena/cli exec vitest run --coverage
 - `packages/cli/tests/*.unit.test.ts` — In-process unit tests with mocked core and stdout
 - `packages/cli/tests/*.test.ts` — Integration tests that run the built CLI binary via subprocess
 
+**Note:** CLI unit test files that use `mock.module()` must run in separate bun processes to avoid cross-file mock leakage. This is handled automatically by the `test` script in `packages/cli/package.json`.
+
 ### Linting
 
 ESLint v9 with TypeScript support across all packages.
 
 ```bash
 # Run lint across all packages
-pnpm lint
+bun run lint
 
 # Run lint for a specific package
-pnpm --filter @arena/core lint
-pnpm --filter @arena/cli lint
-pnpm --filter @arena/web lint
+bun run --cwd packages/core lint
+bun run --cwd packages/cli lint
+bun run --cwd packages/web lint
 ```
 
 - **Core + CLI**: Root `eslint.config.mjs` using `@eslint/js` + `typescript-eslint`
@@ -124,13 +125,13 @@ pnpm --filter @arena/web lint
 
 | Hook | Runs | Purpose |
 |------|------|---------|
-| `pre-commit` | `pnpm test` | Prevents commits that break tests |
-| `pre-push` | `pnpm test && pnpm lint` | Prevents pushing code that fails tests or lint |
+| `pre-commit` | `bun test` | Prevents commits that break tests |
+| `pre-push` | `bun test && bun run lint` | Prevents pushing code that fails tests or lint |
 
-Hooks are installed automatically via the `prepare` script when running `pnpm install`. If hooks are not active, run:
+Hooks are installed automatically via the `prepare` script when running `bun install`. If hooks are not active, run:
 
 ```bash
-pnpm prepare
+bun run prepare
 ```
 
 **Note:** Tests cannot be skipped. Both hooks enforce that all unit tests pass before the operation proceeds.
@@ -139,12 +140,12 @@ pnpm prepare
 
 ```bash
 # Build all packages
-pnpm build
+bun run build
 
 # Build a specific package
-pnpm --filter @arena/core build
-pnpm --filter @arena/cli build
-pnpm --filter @arena/web build
+bun run --cwd packages/core build
+bun run --cwd packages/cli build
+bun run --cwd packages/web build
 ```
 
 ### Coverage Targets
@@ -154,7 +155,7 @@ pnpm --filter @arena/web build
 | `@arena/core` | 90% | 90% | 90% | 90% |
 | `@arena/cli` | 90% | 90% | 90% | 90% |
 
-Coverage thresholds are configured in each package's `vitest.config.ts`. The `coverage` CI/CD step will fail if thresholds are not met.
+Coverage is built into `bun test --coverage`. Run `bun run test:coverage` in each package to verify thresholds.
 
 ## Database
 
@@ -164,6 +165,7 @@ Arena stores all data in a single SQLite database at `~/.arena/arena.db`. The da
 - **Foreign keys** enforced at the database level
 - All timestamps stored as **UTC ISO-8601 strings**
 - IDs use **ULID** with monotonic ordering
+- Uses **bun:sqlite** (built-in SQLite driver) with `drizzle-orm/bun-sqlite`
 
 ## Design Document
 

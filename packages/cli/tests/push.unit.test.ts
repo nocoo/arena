@@ -1,38 +1,47 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, mock, beforeEach, afterEach, spyOn } from "bun:test";
+import type { Mock } from "bun:test";
 import type { PushResult } from "@arena/core";
 
 // Mock @arena/core before importing the command
-vi.mock("@arena/core", () => ({
-  createDatabase: vi.fn(() => "mock-db"),
-  initSchema: vi.fn(),
-  push: vi.fn(),
+const mockPush = mock(() => {}) as Mock<(...args: unknown[]) => unknown>;
+const mockInitSchema = mock(() => {});
+const mockCreateDatabase = mock(() => "mock-db");
+
+mock.module("@arena/core", () => ({
+  createDatabase: mockCreateDatabase,
+  initSchema: mockInitSchema,
+  push: mockPush,
 }));
 
 // Mock utils
-vi.mock("../src/utils.js", () => ({
-  detectBranch: vi.fn(() => "main"),
-  readStdin: vi.fn(() => Promise.resolve(null)),
+const mockDetectBranch = mock(() => "main") as Mock<(...args: unknown[]) => string | null>;
+const mockReadStdin = mock(() => Promise.resolve(null)) as Mock<(...args: unknown[]) => Promise<string | null>>;
+
+mock.module("../src/utils.js", () => ({
+  detectBranch: mockDetectBranch,
+  readStdin: mockReadStdin,
 }));
 
-import { pushCommand } from "../src/commands/push.js";
-import { push as corePush, initSchema, createDatabase } from "@arena/core";
-import { detectBranch, readStdin } from "../src/utils.js";
-
-const mockedPush = vi.mocked(corePush);
-const mockedInitSchema = vi.mocked(initSchema);
-const mockedCreateDatabase = vi.mocked(createDatabase);
-const mockedDetectBranch = vi.mocked(detectBranch);
-const mockedReadStdin = vi.mocked(readStdin);
+const { pushCommand } = await import("../src/commands/push.js");
 
 describe("pushCommand (unit)", () => {
-  let stdoutSpy: ReturnType<typeof vi.spyOn>;
+  let stdoutSpy: ReturnType<typeof spyOn>;
   let originalExitCode: number | undefined;
 
   beforeEach(() => {
-    vi.clearAllMocks();
-    stdoutSpy = vi.spyOn(process.stdout, "write").mockReturnValue(true);
+    mockPush.mockReset();
+    mockInitSchema.mockReset();
+    mockCreateDatabase.mockReset();
+    mockDetectBranch.mockReset();
+    mockReadStdin.mockReset();
+
+    mockCreateDatabase.mockReturnValue("mock-db");
+    mockDetectBranch.mockReturnValue("main");
+    mockReadStdin.mockReturnValue(Promise.resolve(null));
+
+    stdoutSpy = spyOn(process.stdout, "write").mockReturnValue(true);
     originalExitCode = process.exitCode;
-    process.exitCode = undefined;
+    process.exitCode = 0;
   });
 
   afterEach(() => {
@@ -49,7 +58,7 @@ describe("pushCommand (unit)", () => {
   };
 
   it("succeeds with --content flag", async () => {
-    mockedPush.mockReturnValue(fakePushResult);
+    mockPush.mockReturnValue(fakePushResult);
 
     await pushCommand({
       agent: "OpenCode",
@@ -57,16 +66,16 @@ describe("pushCommand (unit)", () => {
       content: "Test opinion",
     });
 
-    expect(mockedInitSchema).toHaveBeenCalled();
-    expect(mockedCreateDatabase).toHaveBeenCalled();
-    expect(mockedPush).toHaveBeenCalledWith("mock-db", {
+    expect(mockInitSchema).toHaveBeenCalled();
+    expect(mockCreateDatabase).toHaveBeenCalled();
+    expect(mockPush).toHaveBeenCalledWith("mock-db", {
       agentName: "OpenCode",
       model: "Claude Opus 4.6",
       content: "Test opinion",
       projectPath: process.cwd(),
       branch: "main",
     });
-    expect(process.exitCode).toBeUndefined();
+    expect(process.exitCode).toBe(0);
 
     const output = JSON.parse(
       (stdoutSpy.mock.calls[0]![0] as string).trim(),
@@ -76,17 +85,17 @@ describe("pushCommand (unit)", () => {
   });
 
   it("reads from stdin when --content is omitted", async () => {
-    mockedReadStdin.mockResolvedValue("Stdin opinion content");
-    mockedPush.mockReturnValue(fakePushResult);
+    mockReadStdin.mockResolvedValue("Stdin opinion content");
+    mockPush.mockReturnValue(fakePushResult);
 
     await pushCommand({ agent: "Cursor", model: "GPT-4o" });
 
-    expect(mockedReadStdin).toHaveBeenCalled();
-    expect(mockedPush).toHaveBeenCalledWith(
+    expect(mockReadStdin).toHaveBeenCalled();
+    expect(mockPush).toHaveBeenCalledWith(
       "mock-db",
       expect.objectContaining({ content: "Stdin opinion content" }),
     );
-    expect(process.exitCode).toBeUndefined();
+    expect(process.exitCode).toBe(0);
   });
 
   it("fails without agent", async () => {
@@ -112,7 +121,7 @@ describe("pushCommand (unit)", () => {
   });
 
   it("fails without content or stdin", async () => {
-    mockedReadStdin.mockResolvedValue(null);
+    mockReadStdin.mockResolvedValue(null);
 
     await pushCommand({ agent: "OpenCode", model: "Claude" });
 
@@ -125,7 +134,7 @@ describe("pushCommand (unit)", () => {
   });
 
   it("uses explicit --project override", async () => {
-    mockedPush.mockReturnValue(fakePushResult);
+    mockPush.mockReturnValue(fakePushResult);
 
     await pushCommand({
       agent: "Test",
@@ -134,14 +143,14 @@ describe("pushCommand (unit)", () => {
       project: "/tmp/fake-project",
     });
 
-    expect(mockedPush).toHaveBeenCalledWith(
+    expect(mockPush).toHaveBeenCalledWith(
       "mock-db",
       expect.objectContaining({ projectPath: "/tmp/fake-project" }),
     );
   });
 
   it("uses explicit --branch override", async () => {
-    mockedPush.mockReturnValue(fakePushResult);
+    mockPush.mockReturnValue(fakePushResult);
 
     await pushCommand({
       agent: "Test",
@@ -150,16 +159,16 @@ describe("pushCommand (unit)", () => {
       branch: "feat/custom",
     });
 
-    expect(mockedDetectBranch).not.toHaveBeenCalled();
-    expect(mockedPush).toHaveBeenCalledWith(
+    expect(mockDetectBranch).not.toHaveBeenCalled();
+    expect(mockPush).toHaveBeenCalledWith(
       "mock-db",
       expect.objectContaining({ branch: "feat/custom" }),
     );
   });
 
   it("auto-detects branch when --branch is not provided", async () => {
-    mockedDetectBranch.mockReturnValue("develop");
-    mockedPush.mockReturnValue(fakePushResult);
+    mockDetectBranch.mockReturnValue("develop");
+    mockPush.mockReturnValue(fakePushResult);
 
     await pushCommand({
       agent: "Test",
@@ -167,15 +176,15 @@ describe("pushCommand (unit)", () => {
       content: "test",
     });
 
-    expect(mockedDetectBranch).toHaveBeenCalledWith(process.cwd());
-    expect(mockedPush).toHaveBeenCalledWith(
+    expect(mockDetectBranch).toHaveBeenCalledWith(process.cwd());
+    expect(mockPush).toHaveBeenCalledWith(
       "mock-db",
       expect.objectContaining({ branch: "develop" }),
     );
   });
 
   it("handles core push throwing an error", async () => {
-    mockedPush.mockImplementation(() => {
+    mockPush.mockImplementation(() => {
       throw new Error("database locked");
     });
 
@@ -194,7 +203,7 @@ describe("pushCommand (unit)", () => {
   });
 
   it("handles non-Error throw", async () => {
-    mockedPush.mockImplementation(() => {
+    mockPush.mockImplementation(() => {
       throw "string error";
     });
 

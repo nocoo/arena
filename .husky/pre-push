@@ -1,1 +1,1 @@
-pnpm test && pnpm lint
+bun run test && bun run lint

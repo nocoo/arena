@@ -1,22 +1,21 @@
 {
   "name": "arena",
   "private": true,
-  "packageManager": "pnpm@10.28.1",
+  "workspaces": ["packages/*"],
   "scripts": {
-    "build": "pnpm -r build",
-    "test": "pnpm -r test",
-    "lint": "pnpm -r lint",
+    "build": "bun run --filter '*' build",
+    "test": "bun run --filter '*' test",
+    "lint": "bun run --filter '*' lint",
+    "dev": "bun run --cwd packages/web dev",
     "prepare": "husky"
   },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "better-sqlite3",
-      "esbuild",
-      "unrs-resolver"
-    ]
-  },
+  "trustedDependencies": [
+    "esbuild",
+    "unrs-resolver"
+  ],
   "devDependencies": {
     "@eslint/js": "^9.39.4",
+    "@types/bun": "^1.2.21",
     "eslint": "^9.39.4",
     "husky": "^9.1.7",
     "typescript-eslint": "^8.57.0"

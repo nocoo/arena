@@ -2,8 +2,8 @@ import { dirname } from "node:path";
 import { join } from "node:path";
 import { homedir } from "node:os";
 import { mkdirSync } from "node:fs";
-import Database from "better-sqlite3";
-import { drizzle } from "drizzle-orm/better-sqlite3";
+import { Database } from "bun:sqlite";
+import { drizzle } from "drizzle-orm/bun-sqlite";
 import * as schema from "./schema.js";
 
 const ARENA_DIR = join(homedir(), ".arena");
@@ -14,8 +14,8 @@ export type ArenaDatabase = ReturnType<typeof drizzle<typeof schema>>;
 export interface ArenaDb {
   /** Drizzle ORM instance for typed queries */
   orm: ArenaDatabase;
-  /** Raw better-sqlite3 instance for transactions and pragmas */
-  sqlite: InstanceType<typeof Database>;
+  /** Raw bun:sqlite instance for transactions and pragmas */
+  sqlite: Database;
 }
 
 export function createDatabase(dbPath: string = DEFAULT_DB_PATH): ArenaDb {
@@ -25,9 +25,9 @@ export function createDatabase(dbPath: string = DEFAULT_DB_PATH): ArenaDb {
   const sqlite = new Database(dbPath);
 
   // Enable WAL mode for concurrent reads
-  sqlite.pragma("journal_mode = WAL");
+  sqlite.exec("PRAGMA journal_mode = WAL");
   // Enable foreign keys
-  sqlite.pragma("foreign_keys = ON");
+  sqlite.exec("PRAGMA foreign_keys = ON");
 
   const orm = drizzle(sqlite, { schema });
 
@@ -39,8 +39,8 @@ export function initSchema(dbPath: string = DEFAULT_DB_PATH) {
   mkdirSync(dirname(dbPath), { recursive: true });
 
   const sqlite = new Database(dbPath);
-  sqlite.pragma("journal_mode = WAL");
-  sqlite.pragma("foreign_keys = ON");
+  sqlite.exec("PRAGMA journal_mode = WAL");
+  sqlite.exec("PRAGMA foreign_keys = ON");
 
   sqlite.exec(`
     CREATE TABLE IF NOT EXISTS projects (

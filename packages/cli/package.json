@@ -9,17 +9,16 @@
   "scripts": {
     "build": "tsc",
     "lint": "eslint",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage"
+    "test": "bun test tests/utils.test.ts && bun test tests/push.unit.test.ts && bun test tests/pop-status.unit.test.ts && bun test tests/push.test.ts tests/pop-status.test.ts",
+    "test:unit": "bun test tests/utils.test.ts && bun test tests/push.unit.test.ts && bun test tests/pop-status.unit.test.ts",
+    "test:integration": "bun test tests/push.test.ts tests/pop-status.test.ts",
+    "test:coverage": "bun test --coverage tests/utils.test.ts && bun test --coverage tests/push.unit.test.ts && bun test --coverage tests/pop-status.unit.test.ts"
   },
   "dependencies": {
     "@arena/core": "workspace:*",
     "commander": "^14.0.0"
   },
   "devDependencies": {
-    "typescript": "^5.9.3",
-    "vitest": "^4.0.18",
-    "@vitest/coverage-v8": "^4.0.18"
+    "typescript": "^5.9.3"
   }
 }

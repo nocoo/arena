@@ -14,23 +14,18 @@
   "scripts": {
     "build": "tsc",
     "lint": "eslint",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage",
+    "test": "bun test",
+    "test:coverage": "bun test --coverage",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push"
   },
   "dependencies": {
-    "better-sqlite3": "^12.6.2",
     "drizzle-orm": "^0.45.1",
     "ulid": "^2.3.0"
   },
   "devDependencies": {
     "drizzle-kit": "^0.31.9",
-    "@types/better-sqlite3": "^7.6.13",
-    "typescript": "^5.9.3",
-    "vitest": "^4.0.18",
-    "@vitest/coverage-v8": "^4.0.18"
+    "typescript": "^5.9.3"
   }
 }

@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach } from "bun:test";
 import { execSync } from "node:child_process";
 import { mkdtempSync, rmSync } from "node:fs";
 import { join } from "node:path";
@@ -11,7 +11,7 @@ function runCli(
   options?: { input?: string; env?: Record<string, string>; cwd?: string },
 ): { stdout: string; exitCode: number } {
   try {
-    const stdout = execSync(`node ${CLI_PATH} ${args}`, {
+    const stdout = execSync(`bun ${CLI_PATH} ${args}`, {
       encoding: "utf-8",
       input: options?.input,
       env: {

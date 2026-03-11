@@ -1,49 +1,52 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, mock, beforeEach, afterEach, spyOn } from "bun:test";
+import type { Mock } from "bun:test";
 import type { PopResult, StatusResult } from "@arena/core";
 
 // Mock @arena/core before importing commands
-vi.mock("@arena/core", () => ({
-  createDatabase: vi.fn(() => "mock-db"),
-  initSchema: vi.fn(),
-  pop: vi.fn(),
-  status: vi.fn(),
+const mockPop = mock(() => {}) as Mock<(...args: unknown[]) => unknown>;
+const mockStatus = mock(() => {}) as Mock<(...args: unknown[]) => unknown>;
+const mockInitSchema = mock(() => {});
+const mockCreateDatabase = mock(() => "mock-db");
+
+mock.module("@arena/core", () => ({
+  createDatabase: mockCreateDatabase,
+  initSchema: mockInitSchema,
+  pop: mockPop,
+  status: mockStatus,
 }));
 
 // Mock utils
-vi.mock("../src/utils.js", () => ({
-  detectBranch: vi.fn(() => "main"),
+const mockDetectBranch = mock(() => "main") as Mock<(...args: unknown[]) => string | null>;
+
+mock.module("../src/utils.js", () => ({
+  detectBranch: mockDetectBranch,
 }));
 
-import { popCommand } from "../src/commands/pop.js";
-import { statusCommand } from "../src/commands/status.js";
-import {
-  pop as corePop,
-  status as coreStatus,
-  initSchema,
-  createDatabase,
-} from "@arena/core";
-import { detectBranch } from "../src/utils.js";
-
-const mockedPop = vi.mocked(corePop);
-const mockedStatus = vi.mocked(coreStatus);
-const mockedInitSchema = vi.mocked(initSchema);
-const mockedCreateDatabase = vi.mocked(createDatabase);
-const mockedDetectBranch = vi.mocked(detectBranch);
+const { popCommand } = await import("../src/commands/pop.js");
+const { statusCommand } = await import("../src/commands/status.js");
 
 describe("popCommand (unit)", () => {
-  let stdoutSpy: ReturnType<typeof vi.spyOn>;
+  let stdoutSpy: ReturnType<typeof spyOn>;
   let originalExitCode: number | undefined;
 
   beforeEach(() => {
-    vi.clearAllMocks();
-    stdoutSpy = vi.spyOn(process.stdout, "write").mockReturnValue(true);
+    mockPop.mockReset();
+    mockStatus.mockReset();
+    mockInitSchema.mockReset();
+    mockCreateDatabase.mockReset();
+    mockDetectBranch.mockReset();
+
+    mockCreateDatabase.mockReturnValue("mock-db");
+    mockDetectBranch.mockReturnValue("main");
+
+    stdoutSpy = spyOn(process.stdout, "write").mockReturnValue(true);
     originalExitCode = process.exitCode;
-    process.exitCode = undefined;
+    process.exitCode = 0;
   });
 
   afterEach(() => {
     stdoutSpy.mockRestore();
-    process.exitCode = originalExitCode;
+    process.exitCode = originalExitCode ?? 0;
   });
 
   it("returns checkpoint when available", () => {
@@ -57,17 +60,17 @@ describe("popCommand (unit)", () => {
         created_at: "2026-01-01T00:00:00.000Z",
       },
     };
-    mockedPop.mockReturnValue(fakeResult);
+    mockPop.mockReturnValue(fakeResult);
 
     popCommand({});
 
-    expect(mockedInitSchema).toHaveBeenCalled();
-    expect(mockedCreateDatabase).toHaveBeenCalled();
-    expect(mockedPop).toHaveBeenCalledWith("mock-db", {
+    expect(mockInitSchema).toHaveBeenCalled();
+    expect(mockCreateDatabase).toHaveBeenCalled();
+    expect(mockPop).toHaveBeenCalledWith("mock-db", {
       projectPath: process.cwd(),
       branch: "main",
     });
-    expect(process.exitCode).toBeUndefined();
+    expect(process.exitCode).toBe(0);
 
     const output = JSON.parse(
       (stdoutSpy.mock.calls[0]![0] as string).trim(),
@@ -82,7 +85,7 @@ describe("popCommand (unit)", () => {
       status: "no_topic",
       message: "No active topic found",
     };
-    mockedPop.mockReturnValue(fakeResult);
+    mockPop.mockReturnValue(fakeResult);
 
     popCommand({ project: "/tmp/nonexistent", branch: "test" });
 
@@ -102,7 +105,7 @@ describe("popCommand (unit)", () => {
       opinions_count: 2,
       message: "Topic has 2 opinions but no checkpoint yet",
     };
-    mockedPop.mockReturnValue(fakeResult);
+    mockPop.mockReturnValue(fakeResult);
 
     popCommand({});
 
@@ -116,7 +119,7 @@ describe("popCommand (unit)", () => {
   });
 
   it("uses explicit --project override", () => {
-    mockedPop.mockReturnValue({
+    mockPop.mockReturnValue({
       ok: false,
       status: "no_topic",
       message: "No active topic found",
@@ -124,14 +127,14 @@ describe("popCommand (unit)", () => {
 
     popCommand({ project: "/tmp/my-project" });
 
-    expect(mockedPop).toHaveBeenCalledWith(
+    expect(mockPop).toHaveBeenCalledWith(
       "mock-db",
       expect.objectContaining({ projectPath: "/tmp/my-project" }),
     );
   });
 
   it("uses explicit --branch override", () => {
-    mockedPop.mockReturnValue({
+    mockPop.mockReturnValue({
       ok: false,
       status: "no_topic",
       message: "No active topic found",
@@ -139,16 +142,16 @@ describe("popCommand (unit)", () => {
 
     popCommand({ branch: "feat/test" });
 
-    expect(mockedDetectBranch).not.toHaveBeenCalled();
-    expect(mockedPop).toHaveBeenCalledWith(
+    expect(mockDetectBranch).not.toHaveBeenCalled();
+    expect(mockPop).toHaveBeenCalledWith(
       "mock-db",
       expect.objectContaining({ branch: "feat/test" }),
     );
   });
 
   it("auto-detects branch when not provided", () => {
-    mockedDetectBranch.mockReturnValue("develop");
-    mockedPop.mockReturnValue({
+    mockDetectBranch.mockReturnValue("develop");
+    mockPop.mockReturnValue({
       ok: false,
       status: "no_topic",
       message: "No active topic found",
@@ -156,15 +159,15 @@ describe("popCommand (unit)", () => {
 
     popCommand({});
 
-    expect(mockedDetectBranch).toHaveBeenCalledWith(process.cwd());
-    expect(mockedPop).toHaveBeenCalledWith(
+    expect(mockDetectBranch).toHaveBeenCalledWith(process.cwd());
+    expect(mockPop).toHaveBeenCalledWith(
       "mock-db",
       expect.objectContaining({ branch: "develop" }),
     );
   });
 
   it("handles core pop throwing an Error", () => {
-    mockedPop.mockImplementation(() => {
+    mockPop.mockImplementation(() => {
       throw new Error("database locked");
     });
 
@@ -179,7 +182,7 @@ describe("popCommand (unit)", () => {
   });
 
   it("handles core pop throwing a non-Error", () => {
-    mockedPop.mockImplementation(() => {
+    mockPop.mockImplementation(() => {
       throw "string error";
     });
 
@@ -195,20 +198,27 @@ describe("popCommand (unit)", () => {
 });
 
 describe("statusCommand (unit)", () => {
-  let stdoutSpy: ReturnType<typeof vi.spyOn>;
+  let stdoutSpy: ReturnType<typeof spyOn>;
   let originalExitCode: number | undefined;
 
   beforeEach(() => {
-    vi.clearAllMocks();
-    mockedDetectBranch.mockReturnValue("main");
-    stdoutSpy = vi.spyOn(process.stdout, "write").mockReturnValue(true);
+    mockPop.mockReset();
+    mockStatus.mockReset();
+    mockInitSchema.mockReset();
+    mockCreateDatabase.mockReset();
+    mockDetectBranch.mockReset();
+
+    mockCreateDatabase.mockReturnValue("mock-db");
+    mockDetectBranch.mockReturnValue("main");
+
+    stdoutSpy = spyOn(process.stdout, "write").mockReturnValue(true);
     originalExitCode = process.exitCode;
-    process.exitCode = undefined;
+    process.exitCode = 0;
   });
 
   afterEach(() => {
     stdoutSpy.mockRestore();
-    process.exitCode = originalExitCode;
+    process.exitCode = originalExitCode ?? 0;
   });
 
   const fakeStatusResult: StatusResult = {
@@ -218,17 +228,17 @@ describe("statusCommand (unit)", () => {
   };
 
   it("returns status with no topic", () => {
-    mockedStatus.mockReturnValue(fakeStatusResult);
+    mockStatus.mockReturnValue(fakeStatusResult);
 
     statusCommand({});
 
-    expect(mockedInitSchema).toHaveBeenCalled();
-    expect(mockedCreateDatabase).toHaveBeenCalled();
-    expect(mockedStatus).toHaveBeenCalledWith("mock-db", {
+    expect(mockInitSchema).toHaveBeenCalled();
+    expect(mockCreateDatabase).toHaveBeenCalled();
+    expect(mockStatus).toHaveBeenCalledWith("mock-db", {
       projectPath: process.cwd(),
       branch: "main",
     });
-    expect(process.exitCode).toBeUndefined();
+    expect(process.exitCode).toBe(0);
 
     const output = JSON.parse(
       (stdoutSpy.mock.calls[0]![0] as string).trim(),
@@ -257,7 +267,7 @@ describe("statusCommand (unit)", () => {
         latest_checkpoint: null,
       },
     };
-    mockedStatus.mockReturnValue(resultWithTopic);
+    mockStatus.mockReturnValue(resultWithTopic);
 
     statusCommand({});
 
@@ -270,43 +280,43 @@ describe("statusCommand (unit)", () => {
   });
 
   it("uses explicit --project override", () => {
-    mockedStatus.mockReturnValue(fakeStatusResult);
+    mockStatus.mockReturnValue(fakeStatusResult);
 
     statusCommand({ project: "/tmp/my-project" });
 
-    expect(mockedStatus).toHaveBeenCalledWith(
+    expect(mockStatus).toHaveBeenCalledWith(
       "mock-db",
       expect.objectContaining({ projectPath: "/tmp/my-project" }),
     );
   });
 
   it("uses explicit --branch override", () => {
-    mockedStatus.mockReturnValue(fakeStatusResult);
+    mockStatus.mockReturnValue(fakeStatusResult);
 
     statusCommand({ branch: "feat/test" });
 
-    expect(mockedDetectBranch).not.toHaveBeenCalled();
-    expect(mockedStatus).toHaveBeenCalledWith(
+    expect(mockDetectBranch).not.toHaveBeenCalled();
+    expect(mockStatus).toHaveBeenCalledWith(
       "mock-db",
       expect.objectContaining({ branch: "feat/test" }),
     );
   });
 
   it("auto-detects branch when not provided", () => {
-    mockedDetectBranch.mockReturnValue("develop");
-    mockedStatus.mockReturnValue(fakeStatusResult);
+    mockDetectBranch.mockReturnValue("develop");
+    mockStatus.mockReturnValue(fakeStatusResult);
 
     statusCommand({});
 
-    expect(mockedDetectBranch).toHaveBeenCalledWith(process.cwd());
-    expect(mockedStatus).toHaveBeenCalledWith(
+    expect(mockDetectBranch).toHaveBeenCalledWith(process.cwd());
+    expect(mockStatus).toHaveBeenCalledWith(
       "mock-db",
       expect.objectContaining({ branch: "develop" }),
     );
   });
 
   it("handles core status throwing an Error", () => {
-    mockedStatus.mockImplementation(() => {
+    mockStatus.mockImplementation(() => {
       throw new Error("database corrupted");
     });
 
@@ -321,7 +331,7 @@ describe("statusCommand (unit)", () => {
   });
 
   it("handles core status throwing a non-Error", () => {
-    mockedStatus.mockImplementation(() => {
+    mockStatus.mockImplementation(() => {
       throw 42;
     });
 
