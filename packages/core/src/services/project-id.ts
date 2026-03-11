@@ -8,9 +8,10 @@
  */
 export function deriveProjectId(cwd: string): string {
   return cwd
-    .replace(/[/\\]/g, "-")
+    .replace(/[/\\:]/g, "-")
     .toLowerCase()
-    .replace(/^-+/, "");
+    .replace(/^-+/, "")
+    .replace(/-+/g, "-");
 }
 
 /**

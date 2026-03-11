@@ -1,4 +1,4 @@
-import { ulid } from "ulid";
+import { monotonicFactory } from "ulid";
 import { eq, and, desc, isNull, count } from "drizzle-orm";
 import type { ArenaDatabase } from "../db/connection.js";
 import { projects, topics, opinions, checkpoints } from "../db/schema.js";
@@ -9,6 +9,8 @@ import type {
   StatusResult,
   CheckpointContent,
 } from "../types/index.js";
+
+const ulid = monotonicFactory();
 
 /**
  * Check if a UTC ISO-8601 date string falls on "today" in local timezone.
@@ -69,7 +71,7 @@ function findOrCreateTopic(
     .select()
     .from(topics)
     .where(and(eq(topics.projectId, projectId), branchCondition))
-    .orderBy(desc(topics.createdAt))
+    .orderBy(desc(topics.createdAt), desc(topics.id))
     .limit(1)
     .all();
 
@@ -165,7 +167,7 @@ export function pop(
     .select()
     .from(topics)
     .where(and(eq(topics.projectId, projectId), branchCondition))
-    .orderBy(desc(topics.createdAt))
+    .orderBy(desc(topics.createdAt), desc(topics.id))
     .limit(1)
     .get();
 
@@ -182,7 +184,7 @@ export function pop(
     .select()
     .from(checkpoints)
     .where(eq(checkpoints.topicId, topic.id))
-    .orderBy(desc(checkpoints.createdAt))
+    .orderBy(desc(checkpoints.createdAt), desc(checkpoints.id))
     .limit(1)
     .get();
 
@@ -248,7 +250,7 @@ export function status(
     .select()
     .from(topics)
     .where(and(eq(topics.projectId, projectId), branchCondition))
-    .orderBy(desc(topics.createdAt))
+    .orderBy(desc(topics.createdAt), desc(topics.id))
     .limit(1)
     .get();
 
@@ -273,7 +275,7 @@ export function status(
     .select()
     .from(checkpoints)
     .where(eq(checkpoints.topicId, topic.id))
-    .orderBy(desc(checkpoints.createdAt))
+    .orderBy(desc(checkpoints.createdAt), desc(checkpoints.id))
     .limit(1)
     .get();
 
