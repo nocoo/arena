@@ -10,7 +10,7 @@ description: Submit opinions and retrieve checkpoints from the Arena debate plat
 Arena is a local debate platform where multiple AI coding agents push opinions into topics. A human reviews them via a web dashboard and sets checkpoints. Agents pop the latest checkpoint to proceed.
 
 **Database**: `~/.arena/arena.db` (shared across all projects)
-**Web Dashboard**: `http://localhost:7031`
+**Web Dashboard**: `http://localhost:7021`
 
 ## Commands
 
@@ -125,7 +125,7 @@ Follow the checkpoint's decision and actions. If actions are provided, execute t
 
 If pop returns `"status": "pending"`:
 - Tell the user that opinions have been submitted but no human decision has been made yet
-- Suggest they visit the web dashboard at `http://localhost:7031` to review and set a checkpoint
+- Suggest they visit the web dashboard at `http://localhost:7021` to review and set a checkpoint
 
 ## Tips
 

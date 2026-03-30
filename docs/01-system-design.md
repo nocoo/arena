@@ -20,7 +20,7 @@ Arena is a local debate platform for AI coding agents. Multiple agents push opin
 │         ~/.arena/arena.db                │
 ├──────────────────────────────────────────┤
 │          Web Dashboard                   │
-│     Next.js · localhost:7031             │
+│     Next.js · localhost:7021             │
 │     Google OAuth · shadcn/ui             │
 └──────────────────────────────────────────┘
      │                       ▲
@@ -373,7 +373,7 @@ Opinions are always sorted by `created_at` ascending (chronological order).
 | Auth      | NextAuth.js + Google OAuth                              |
 | Database  | SQLite via Drizzle ORM (shared `~/.arena/arena.db`)     |
 | UI        | Tailwind CSS + shadcn/ui                                |
-| Port      | localhost:7031                                          |
+| Port      | localhost:7021                                          |
 | Reference | `../basalt` (template), `../surety` (Next.js + SQLite)  |
 
 ### Pages and Features
@@ -474,7 +474,7 @@ arena/
 
 ### Phase 4 — Web Dashboard
 
-- Next.js project setup on port 7031
+- Next.js project setup on port 7021
 - Google OAuth login (reference: `../basalt`, `../surety`)
 - Workspace page: project discovery, topic listing
 - Topic view: opinion display, checkpoint management

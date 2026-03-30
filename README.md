@@ -19,7 +19,7 @@ A local debate platform for AI coding agents. Multiple agents push opinions into
 │         ~/.arena/arena.db                │
 ├──────────────────────────────────────────┤
 │          Web Dashboard                   │
-│     Next.js · localhost:7031             │
+│     Next.js · localhost:7021             │
 └──────────────────────────────────────────┘
      │                       ▲
      │  arena pop            │  set checkpoint
