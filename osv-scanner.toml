@@ -1,0 +1,47 @@
+[[IgnoredVulns]]
+id = "GHSA-f886-m6hf-6m8v"
+reason = "Indirect dependency (brace-expansion), no direct exposure"
+
+[[IgnoredVulns]]
+id = "GHSA-gpj5-g38j-94v9"
+reason = "Indirect dependency (drizzle-orm), no direct exposure"
+
+[[IgnoredVulns]]
+id = "GHSA-67mh-4wv8-2f99"
+reason = "Indirect dependency (esbuild), no direct exposure"
+
+[[IgnoredVulns]]
+id = "GHSA-rf6f-7fwh-wjgh"
+reason = "Indirect dependency (flatted), no direct exposure"
+
+[[IgnoredVulns]]
+id = "GHSA-3x4c-7xq6-9pq8"
+reason = "Indirect dependency (next), no direct exposure"
+
+[[IgnoredVulns]]
+id = "GHSA-ggv3-7p47-pfv8"
+reason = "Indirect dependency (next), no direct exposure"
+
+[[IgnoredVulns]]
+id = "GHSA-h27x-g6w4-24gq"
+reason = "Indirect dependency (next), no direct exposure"
+
+[[IgnoredVulns]]
+id = "GHSA-jcc7-9wpm-mj36"
+reason = "Indirect dependency (next), no direct exposure"
+
+[[IgnoredVulns]]
+id = "GHSA-mq59-m269-xvcx"
+reason = "Indirect dependency (next), no direct exposure"
+
+[[IgnoredVulns]]
+id = "GHSA-q4gf-8mx6-v5v3"
+reason = "Indirect dependency (next), no direct exposure"
+
+[[IgnoredVulns]]
+id = "GHSA-3v7f-55p6-f55p"
+reason = "Indirect dependency (picomatch), no direct exposure"
+
+[[IgnoredVulns]]
+id = "GHSA-c2c7-rcm5-vvqj"
+reason = "Indirect dependency (picomatch), no direct exposure"
