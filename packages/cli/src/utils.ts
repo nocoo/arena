@@ -6,10 +6,14 @@ import { execSync } from "node:child_process";
  */
 export function detectBranch(cwd: string): string | null {
   try {
+    // Strip GIT_DIR / GIT_WORK_TREE so the subprocess discovers the repo
+    // from `cwd` rather than inheriting a parent git-hook context.
+    const { GIT_DIR: _, GIT_WORK_TREE: __, ...cleanEnv } = process.env;
     const branch = execSync("git rev-parse --abbrev-ref HEAD", {
       cwd,
       stdio: ["pipe", "pipe", "pipe"],
       encoding: "utf-8",
+      env: cleanEnv,
     }).trim();
     // In detached HEAD state, git returns literal "HEAD"
     if (!branch || branch === "HEAD") return null;

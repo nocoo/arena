@@ -1,0 +1,9 @@
+[test]
+coverageSkipTestFiles = true
+
+# CLI entry point (commander setup + .parse()) is not unit-testable.
+coveragePathIgnorePatterns = ["src/index.ts"]
+
+[test.coverageThreshold]
+line = 90
+function = 90
