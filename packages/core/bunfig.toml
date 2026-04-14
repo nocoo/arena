@@ -1,0 +1,10 @@
+[test]
+coverageSkipTestFiles = true
+
+# Schema definitions (drizzle table constants) have no callable functions to test.
+# connection.ts better-sqlite3 branch is unreachable in bun runtime.
+coveragePathIgnorePatterns = ["src/db/schema.ts", "src/db/connection.ts"]
+
+[test.coverageThreshold]
+line = 90
+function = 90

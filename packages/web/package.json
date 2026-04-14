@@ -7,7 +7,7 @@
     "dev": "next dev -p 7021",
     "build": "next build",
     "start": "next start -p 7021",
-    "lint": "eslint"
+    "lint": "eslint --max-warnings=0"
   },
   "dependencies": {
     "@arena/core": "workspace:*",

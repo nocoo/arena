@@ -9,6 +9,9 @@
     "dev": "bun run --cwd packages/web dev",
     "prepare": "husky"
   },
+  "overrides": {
+    "picomatch": "^4.0.4"
+  },
   "trustedDependencies": [
     "better-sqlite3",
     "esbuild",
@@ -20,5 +23,8 @@
     "eslint": "^9.39.4",
     "husky": "^9.1.7",
     "typescript-eslint": "^8.57.0"
+  },
+  "dependencies": {
+    "picomatch": "^4.0.4"
   }
 }
