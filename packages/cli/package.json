@@ -8,7 +8,7 @@
   },
   "scripts": {
     "build": "tsc",
-    "lint": "eslint",
+    "lint": "eslint --max-warnings=0",
     "test": "bun test tests/utils.test.ts && bun test tests/push.unit.test.ts && bun test tests/pop-status.unit.test.ts && bun test tests/push.test.ts tests/pop-status.test.ts",
     "test:unit": "bun test tests/utils.test.ts && bun test tests/push.unit.test.ts && bun test tests/pop-status.unit.test.ts",
     "test:integration": "bun test tests/push.test.ts tests/pop-status.test.ts",
