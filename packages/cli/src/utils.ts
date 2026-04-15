@@ -6,11 +6,12 @@ import { execSync } from "node:child_process";
  */
 export function detectBranch(cwd: string): string | null {
   try {
-    const branch = execSync("git rev-parse --abbrev-ref HEAD", {
+    const result = execSync("git rev-parse --abbrev-ref HEAD", {
       cwd,
       stdio: ["pipe", "pipe", "pipe"],
       encoding: "utf-8",
-    }).trim();
+    });
+    const branch = String(result).trim();
     // In detached HEAD state, git returns literal "HEAD"
     if (!branch || branch === "HEAD") return null;
     return branch;
