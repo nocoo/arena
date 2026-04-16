@@ -159,7 +159,7 @@ function StatCard({ label, value }: { label: string; value: number | string }) {
   return (
     <div className="rounded-card bg-secondary border-0 shadow-none px-4 py-3">
       <p className="text-xs text-muted-foreground">{label}</p>
-      <p className="mt-1 text-2xl font-semibold text-foreground">{value}</p>
+      <p className="mt-1 text-2xl font-semibold text-foreground tabular-nums">{value}</p>
     </div>
   );
 }
