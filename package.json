@@ -1,13 +1,16 @@
 {
   "name": "arena",
   "private": true,
-  "workspaces": ["packages/*"],
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
     "build": "bun run --filter '*' build",
     "test": "bun run --filter '*' test",
     "lint": "bun run --filter '*' lint",
     "dev": "bun run --cwd packages/web dev",
-    "prepare": "husky"
+    "prepare": "husky",
+    "typecheck": "tsc --noEmit"
   },
   "overrides": {
     "picomatch": "^4.0.4"
@@ -26,5 +29,10 @@
   },
   "dependencies": {
     "picomatch": "^4.0.4"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "eslint --max-warnings=0"
+    ]
   }
 }
