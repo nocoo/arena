@@ -8,7 +8,7 @@ on:
 
 jobs:
   quality:
-    uses: nocoo/base-ci/.github/workflows/bun-quality.yml@v2026
+    uses: nocoo/base-ci/.github/workflows/bun-quality.yml@v2026.1
     with:
       test-command: "bun run --filter '@arena/core' test && bun run --filter '@arena/cli' test:unit"
       typecheck-command: "true"
