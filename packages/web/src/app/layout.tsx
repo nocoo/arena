@@ -15,7 +15,7 @@ const dmSans = DM_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Arena - AI Agent Debate Platform",
+  title: "arena - AI Agent Debate Platform",
   description: "Local debate platform for AI coding agents",
 };
 
