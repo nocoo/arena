@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from "bun:test";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { mkdtempSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
@@ -166,6 +166,26 @@ describe("pop", () => {
     }
   });
 
+  it("matches null branch when popping with branch=null", () => {
+    push(ctx.db, {
+      agentName: "OpenCode",
+      model: "Claude Opus 4.6",
+      content: "Opinion on no-branch topic",
+      projectPath: "/Users/test/no-branch",
+      branch: null,
+    });
+
+    const result = pop(ctx.db, {
+      projectPath: "/Users/test/no-branch",
+      branch: null,
+    });
+
+    expect(result.ok).toBe(false);
+    if (!result.ok && result.status === "pending") {
+      expect(result.opinions_count).toBe(1);
+    }
+  });
+
   it("returns pending when topic exists but no checkpoint", () => {
     push(ctx.db, {
       agentName: "OpenCode",
@@ -300,6 +320,25 @@ describe("status", () => {
     expect(result.project.id).toBe("users-test-project");
     expect(result.project.name).toBe("project");
     expect(result.topic).toBeNull();
+  });
+
+  it("matches null branch when status branch=null", () => {
+    push(ctx.db, {
+      agentName: "OpenCode",
+      model: "Claude Opus 4.6",
+      content: "Opinion",
+      projectPath: "/Users/test/no-branch-status",
+      branch: null,
+    });
+
+    const result = status(ctx.db, {
+      projectPath: "/Users/test/no-branch-status",
+      branch: null,
+    });
+
+    expect(result.ok).toBe(true);
+    expect(result.topic).not.toBeNull();
+    expect(result.topic?.branch).toBeNull();
   });
 
   it("returns topic with opinions in chronological order", () => {

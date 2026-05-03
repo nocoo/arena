@@ -1,4 +1,4 @@
-import { describe, it, expect } from "bun:test";
+import { describe, it, expect } from "vitest";
 import { deriveProjectId, deriveProjectName } from "../src/services/project-id.js";
 
 describe("deriveProjectId", () => {

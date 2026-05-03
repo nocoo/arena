@@ -1,24 +1,22 @@
-import { describe, it, expect, mock, beforeEach, afterEach, spyOn } from "bun:test";
-import type { Mock } from "bun:test";
+import { describe, it, expect, vi, beforeEach, afterEach, type MockInstance } from "vitest";
 import type { PopResult, StatusResult } from "@arena/core";
 
-// Mock @arena/core before importing commands
-const mockPop = mock(() => {}) as Mock<(...args: unknown[]) => unknown>;
-const mockStatus = mock(() => {}) as Mock<(...args: unknown[]) => unknown>;
-const mockInitSchema = mock(() => {});
-const mockCreateDatabase = mock(() => "mock-db");
+const { mockPop, mockStatus, mockInitSchema, mockCreateDatabase, mockDetectBranch } = vi.hoisted(() => ({
+  mockPop: vi.fn(),
+  mockStatus: vi.fn(),
+  mockInitSchema: vi.fn(),
+  mockCreateDatabase: vi.fn(),
+  mockDetectBranch: vi.fn(),
+}));
 
-mock.module("@arena/core", () => ({
+vi.mock("@arena/core", () => ({
   createDatabase: mockCreateDatabase,
   initSchema: mockInitSchema,
   pop: mockPop,
   status: mockStatus,
 }));
 
-// Mock utils
-const mockDetectBranch = mock(() => "main") as Mock<(...args: unknown[]) => string | null>;
-
-mock.module("../src/utils.js", () => ({
+vi.mock("../src/utils.js", () => ({
   detectBranch: mockDetectBranch,
 }));
 
@@ -26,7 +24,7 @@ const { popCommand } = await import("../src/commands/pop.js");
 const { statusCommand } = await import("../src/commands/status.js");
 
 describe("popCommand (unit)", () => {
-  let stdoutSpy: ReturnType<typeof spyOn>;
+  let stdoutSpy: MockInstance<typeof process.stdout.write>;
   let originalExitCode: number | undefined;
 
   beforeEach(() => {
@@ -39,7 +37,7 @@ describe("popCommand (unit)", () => {
     mockCreateDatabase.mockReturnValue("mock-db");
     mockDetectBranch.mockReturnValue("main");
 
-    stdoutSpy = spyOn(process.stdout, "write").mockReturnValue(true);
+    stdoutSpy = vi.spyOn(process.stdout, "write").mockReturnValue(true);
     originalExitCode = process.exitCode;
     process.exitCode = 0;
   });
@@ -198,7 +196,7 @@ describe("popCommand (unit)", () => {
 });
 
 describe("statusCommand (unit)", () => {
-  let stdoutSpy: ReturnType<typeof spyOn>;
+  let stdoutSpy: MockInstance<typeof process.stdout.write>;
   let originalExitCode: number | undefined;
 
   beforeEach(() => {
@@ -211,7 +209,7 @@ describe("statusCommand (unit)", () => {
     mockCreateDatabase.mockReturnValue("mock-db");
     mockDetectBranch.mockReturnValue("main");
 
-    stdoutSpy = spyOn(process.stdout, "write").mockReturnValue(true);
+    stdoutSpy = vi.spyOn(process.stdout, "write").mockReturnValue(true);
     originalExitCode = process.exitCode;
     process.exitCode = 0;
   });
