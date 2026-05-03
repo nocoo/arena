@@ -77,11 +77,11 @@ arena push --agent "Test" --model "Test" --content "test" --project /path/to/pro
 
 ### Testing
 
-Tests use [bun:test](https://bun.sh/docs/cli/test) with built-in coverage. Both `core` and `cli` packages enforce **90% minimum coverage** thresholds for statements, branches, functions, and lines.
+Tests use [vitest](https://vitest.dev/) with built-in coverage. Both `core` and `cli` packages enforce **95% minimum coverage** thresholds for statements, functions, and lines (90% for branches).
 
 ```bash
 # Run all tests (core + cli)
-bun test
+bun run test
 
 # Run tests for a specific package
 bun run --cwd packages/core test
@@ -98,7 +98,7 @@ bun run --cwd packages/cli test:coverage
 - `packages/cli/tests/*.unit.test.ts` — In-process unit tests with mocked core and stdout
 - `packages/cli/tests/*.test.ts` — Integration tests that run the built CLI binary via subprocess
 
-**Note:** CLI unit test files that use `mock.module()` must run in separate bun processes to avoid cross-file mock leakage. This is handled automatically by the `test` script in `packages/cli/package.json`.
+**Note:** CLI unit test files that use `vi.mock()` must run in separate vitest processes to avoid cross-file mock leakage. This is handled automatically by the `test` script in `packages/cli/package.json`.
 
 ### Linting
 
@@ -152,10 +152,10 @@ bun run --cwd packages/web build
 
 | Package | Statements | Branches | Functions | Lines |
 |---------|-----------|----------|-----------|-------|
-| `@arena/core` | 90% | 90% | 90% | 90% |
-| `@arena/cli` | 90% | 90% | 90% | 90% |
+| `@arena/core` | 95% | 90% | 95% | 95% |
+| `@arena/cli` | 95% | 90% | 95% | 95% |
 
-Coverage is built into `bun test --coverage`. Run `bun run test:coverage` in each package to verify thresholds.
+Coverage uses `vitest run --coverage` (v8 provider). Run `bun run test:coverage` in each package to verify thresholds.
 
 ## Database
 
