@@ -573,6 +573,38 @@ describe("pop — edge cases", () => {
       });
     }
   });
+
+  it("returns no_topic with null branch when nothing exists", () => {
+    const result = pop(ctx.db, {
+      projectPath: "/Users/test/null-branch-pop",
+      branch: null,
+    });
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.status).toBe("no_topic");
+    }
+  });
+
+  it("returns pending with null branch when topic exists but no checkpoint", () => {
+    push(ctx.db, {
+      agentName: "OpenCode",
+      model: "Claude Opus 4.6",
+      content: "Opinion without git",
+      projectPath: "/Users/test/null-branch-pending",
+      branch: null,
+    });
+
+    const result = pop(ctx.db, {
+      projectPath: "/Users/test/null-branch-pending",
+      branch: null,
+    });
+
+    expect(result.ok).toBe(false);
+    if (!result.ok && result.status === "pending") {
+      expect(result.opinions_count).toBe(1);
+    }
+  });
 });
 
 describe("status — edge cases", () => {
@@ -612,6 +644,35 @@ describe("status — edge cases", () => {
     expect(result.topic!.latest_checkpoint!.content).toEqual({
       decision: "plain text checkpoint",
     });
+  });
+
+  it("returns null topic with null branch when no topic exists", () => {
+    const result = status(ctx.db, {
+      projectPath: "/Users/test/status-null-branch",
+      branch: null,
+    });
+
+    expect(result.ok).toBe(true);
+    expect(result.topic).toBeNull();
+  });
+
+  it("returns topic with null branch when one exists", () => {
+    push(ctx.db, {
+      agentName: "OpenCode",
+      model: "Claude Opus 4.6",
+      content: "Null-branch opinion",
+      projectPath: "/Users/test/status-null-branch-exists",
+      branch: null,
+    });
+
+    const result = status(ctx.db, {
+      projectPath: "/Users/test/status-null-branch-exists",
+      branch: null,
+    });
+
+    expect(result.ok).toBe(true);
+    expect(result.topic).not.toBeNull();
+    expect(result.topic!.branch).toBeNull();
   });
 });
 
