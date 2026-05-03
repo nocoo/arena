@@ -1,23 +1,21 @@
-import { describe, it, expect, mock, beforeEach, afterEach, spyOn } from "bun:test";
-import type { Mock } from "bun:test";
+import { describe, it, expect, vi, beforeEach, afterEach, type MockInstance } from "vitest";
 import type { PushResult } from "@arena/core";
 
-// Mock @arena/core before importing the command
-const mockPush = mock(() => {}) as Mock<(...args: unknown[]) => unknown>;
-const mockInitSchema = mock(() => {});
-const mockCreateDatabase = mock(() => "mock-db");
+const { mockPush, mockInitSchema, mockCreateDatabase, mockDetectBranch, mockReadStdin } = vi.hoisted(() => ({
+  mockPush: vi.fn(),
+  mockInitSchema: vi.fn(),
+  mockCreateDatabase: vi.fn(),
+  mockDetectBranch: vi.fn(),
+  mockReadStdin: vi.fn(),
+}));
 
-mock.module("@arena/core", () => ({
+vi.mock("@arena/core", () => ({
   createDatabase: mockCreateDatabase,
   initSchema: mockInitSchema,
   push: mockPush,
 }));
 
-// Mock utils
-const mockDetectBranch = mock(() => "main") as Mock<(...args: unknown[]) => string | null>;
-const mockReadStdin = mock(() => Promise.resolve(null)) as Mock<(...args: unknown[]) => Promise<string | null>>;
-
-mock.module("../src/utils.js", () => ({
+vi.mock("../src/utils.js", () => ({
   detectBranch: mockDetectBranch,
   readStdin: mockReadStdin,
 }));
@@ -25,7 +23,7 @@ mock.module("../src/utils.js", () => ({
 const { pushCommand } = await import("../src/commands/push.js");
 
 describe("pushCommand (unit)", () => {
-  let stdoutSpy: ReturnType<typeof spyOn>;
+  let stdoutSpy: MockInstance<typeof process.stdout.write>;
   let originalExitCode: number | undefined;
 
   beforeEach(() => {
@@ -39,7 +37,7 @@ describe("pushCommand (unit)", () => {
     mockDetectBranch.mockReturnValue("main");
     mockReadStdin.mockReturnValue(Promise.resolve(null));
 
-    stdoutSpy = spyOn(process.stdout, "write").mockReturnValue(true);
+    stdoutSpy = vi.spyOn(process.stdout, "write").mockReturnValue(true);
     originalExitCode = process.exitCode;
     process.exitCode = 0;
   });

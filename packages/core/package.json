@@ -14,8 +14,8 @@
   "scripts": {
     "build": "tsc",
     "lint": "eslint --max-warnings=0",
-    "test": "bun test",
-    "test:coverage": "bun test --coverage",
+    "test": "bun --bun vitest run",
+    "test:coverage": "vitest run --coverage",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push"

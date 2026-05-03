@@ -9,10 +9,10 @@
   "scripts": {
     "build": "tsc",
     "lint": "eslint --max-warnings=0",
-    "test": "bun test tests/utils.test.ts && bun test tests/push.unit.test.ts && bun test tests/pop-status.unit.test.ts && bun test tests/push.test.ts tests/pop-status.test.ts",
-    "test:unit": "bun test tests/utils.test.ts && bun test tests/push.unit.test.ts && bun test tests/pop-status.unit.test.ts",
-    "test:integration": "bun test tests/push.test.ts tests/pop-status.test.ts",
-    "test:coverage": "bun test --coverage tests/utils.test.ts && bun test --coverage tests/push.unit.test.ts && bun test --coverage tests/pop-status.unit.test.ts"
+    "test": "bun run build && bun --bun vitest run",
+    "test:unit": "bun --bun vitest run tests/utils.test.ts tests/push.unit.test.ts tests/pop-status.unit.test.ts",
+    "test:integration": "bun run build && bun --bun vitest run tests/push.test.ts tests/pop-status.test.ts",
+    "test:coverage": "vitest run --coverage tests/utils.test.ts tests/push.unit.test.ts tests/pop-status.unit.test.ts"
   },
   "dependencies": {
     "@arena/core": "workspace:*",
