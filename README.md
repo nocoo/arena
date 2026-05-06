@@ -125,8 +125,8 @@ bun run --cwd packages/web lint
 
 | Hook | Runs | Purpose |
 |------|------|---------|
-| `pre-commit` | `bun test` | Prevents commits that break tests |
-| `pre-push` | `bun test && bun run lint` | Prevents pushing code that fails tests or lint |
+| `pre-commit` | `bun run typecheck` + `bun run lint` + `bun run test:coverage` + `gitleaks protect --staged` | Quality gate: types, lint, vitest coverage, and secret scanning |
+| `pre-push` | `bun run build && bun run test && bun run lint` + `osv-scanner` | Full build, vitest suite, lint, and dependency vulnerability scan |
 
 Hooks are installed automatically via the `prepare` script when running `bun install`. If hooks are not active, run:
 
