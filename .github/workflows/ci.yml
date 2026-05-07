@@ -12,5 +12,6 @@ jobs:
     with:
       test-command: "bun run test:coverage"
       typecheck-command: "true"
+      enable-security: "true"
       enable-l2: "false"
     secrets: inherit
