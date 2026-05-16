@@ -11,6 +11,17 @@ jobs:
     uses: nocoo/base-ci/.github/workflows/bun-quality.yml@v2026.2
     with:
       ignore-scripts: true
+      # bun 1.3.x's --ignore-scripts overrides trustedDependencies — lifecycle
+      # scripts are skipped for ALL deps, including trusted ones. Re-run install
+      # scripts for our explicitly trusted native deps so test:coverage can load
+      # the better-sqlite3 native binding. Bun's isolated layout puts the real
+      # package under node_modules/.bun/<name>@<ver>/node_modules/<name>.
+      pre-command: |
+        for pkg_dir in $(find node_modules/.bun -mindepth 3 -maxdepth 3 -type d -name better-sqlite3 -path '*/node_modules/better-sqlite3' 2>/dev/null); do
+          echo "::group::rebuild trusted native dep: $pkg_dir"
+          (cd "$pkg_dir" && bun run install)
+          echo "::endgroup::"
+        done
       test-command: "bun run test:coverage"
       typecheck-command: "true"
       enable-security: "true"
