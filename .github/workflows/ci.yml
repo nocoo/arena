@@ -8,8 +8,11 @@ on:
 
 jobs:
   quality:
-    uses: nocoo/base-ci/.github/workflows/bun-quality.yml@v2026.1
+    uses: nocoo/base-ci/.github/workflows/bun-quality.yml@v2026.3
     with:
+      ignore-scripts: true
+      trusted-native-deps: "better-sqlite3"
+      extra-install-dirs: "packages/core"
       test-command: "bun run test:coverage"
       typecheck-command: "true"
       enable-security: "true"
