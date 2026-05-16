@@ -10,7 +10,7 @@ jobs:
   quality:
     uses: nocoo/base-ci/.github/workflows/bun-quality.yml@v2026.4
     with:
-      ignore-scripts: true
+      trusted-native-deps: "better-sqlite3,esbuild,unrs-resolver"
       test-command: "bun run test:coverage"
       typecheck-command: "true"
       enable-security: "true"
