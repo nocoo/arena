@@ -81,9 +81,13 @@
     },
   },
   "trustedDependencies": [
-    "better-sqlite3",
+    "@tailwindcss/oxide",
     "esbuild",
+    "sharp",
+    "lightningcss",
+    "next",
     "unrs-resolver",
+    "better-sqlite3",
   ],
   "overrides": {
     "picomatch": "^4.0.4",

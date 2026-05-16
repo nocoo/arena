@@ -18,8 +18,13 @@
     "postcss": "^8.5.10"
   },
   "trustedDependencies": [
+    "@swc/core",
+    "@tailwindcss/oxide",
     "better-sqlite3",
     "esbuild",
+    "lightningcss",
+    "next",
+    "sharp",
     "unrs-resolver"
   ],
   "devDependencies": {
