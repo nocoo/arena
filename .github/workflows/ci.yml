@@ -8,8 +8,9 @@ on:
 
 jobs:
   quality:
-    uses: nocoo/base-ci/.github/workflows/bun-quality.yml@v2026.1
+    uses: nocoo/base-ci/.github/workflows/bun-quality.yml@v2026.2
     with:
+      ignore-scripts: true
       test-command: "bun run test:coverage"
       typecheck-command: "true"
       enable-security: "true"
