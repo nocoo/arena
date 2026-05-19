@@ -365,28 +365,34 @@ export function TopicView({ topic }: TopicViewProps) {
 }
 
 function CheckpointContentDisplay({ content }: { content: string }) {
+  let parsed:
+    | { decision?: string; reasoning?: string; actions?: string[] }
+    | null = null;
   try {
-    const parsed = JSON.parse(content);
-    return (
-      <div className="space-y-1.5">
-        <div className="text-sm font-medium">{parsed.decision}</div>
-        {parsed.reasoning && (
-          <div className="text-xs text-muted-foreground">
-            {parsed.reasoning}
-          </div>
-        )}
-        {parsed.actions?.length > 0 && (
-          <ul className="text-xs text-muted-foreground list-disc list-inside">
-            {parsed.actions.map((a: string, i: number) => (
-              <li key={i}>{a}</li>
-            ))}
-          </ul>
-        )}
-      </div>
-    );
+    parsed = JSON.parse(content);
   } catch {
+    parsed = null;
+  }
+
+  if (!parsed) {
     return <div className="text-sm">{content}</div>;
   }
+
+  return (
+    <div className="space-y-1.5">
+      <div className="text-sm font-medium">{parsed.decision}</div>
+      {parsed.reasoning && (
+        <div className="text-xs text-muted-foreground">{parsed.reasoning}</div>
+      )}
+      {parsed.actions && parsed.actions.length > 0 && (
+        <ul className="text-xs text-muted-foreground list-disc list-inside">
+          {parsed.actions.map((a: string, i: number) => (
+            <li key={i}>{a}</li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
 }
 
 function renderInterspersedCheckpoints(
