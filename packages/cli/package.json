@@ -16,7 +16,7 @@
   },
   "dependencies": {
     "@arena/core": "workspace:*",
-    "commander": "^14.0.0"
+    "commander": "^15.0.0"
   },
   "devDependencies": {
     "typescript": "^6.0.3"
