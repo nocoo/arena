@@ -3,7 +3,8 @@
 import { signIn } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
-import { Swords, Github } from "lucide-react";
+import { Swords } from "lucide-react";
+import { GithubIcon } from "@/components/icons/github-icon";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
 
 function Barcode() {
@@ -61,10 +62,9 @@ function LoginContent() {
           aria-label="GitHub repository"
           className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
         >
-          <Github
+          <GithubIcon
             className="h-[18px] w-[18px]"
             aria-hidden="true"
-            strokeWidth={1.5}
           />
         </a>
         <ThemeToggle />
