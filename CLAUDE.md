@@ -31,7 +31,7 @@ This file is the **contract**. Hooks, CI, and config are **enforcement**. If the
 |---|---|
 | Language | TypeScript 6 |
 | Package manager | Bun workspaces |
-| Runtime | CLI shebang `node`; Next.js 16 dashboard; Bun for package scripts |
+| Runtime | Bun for scripts/tests/CLI in practice; Next.js 16 dashboard. CLI shebang is `node` but DB uses `require` — do not run the CLI under Node |
 | Lint | ESLint `--max-warnings=0` |
 | Tests | Vitest L1 on core+cli (95/95/95, branches 90) |
 | Data | `~/.arena/arena.db` (`bun:sqlite` or `better-sqlite3`) |
@@ -57,7 +57,7 @@ bun run test:coverage
 
 Status: `enforced` | `planned` | `manual` | `N/A`. `enforced` Evidence = hook/CI/config/script. `planned` has no Evidence. `manual` = human checklist.
 
-Org gaps to raise later (do not lower this file): index-snapshot pre-commit; stdin-range pre-push; `.skip`/`.only`; L2 HTTP tests; web L1; L3/L5. Today: pre-commit typecheck/lint/coverage on the working tree; gitleaks `--staged`; pre-push `build && test && lint` + osv.
+Org gaps to raise later (do not lower this file): index-snapshot pre-commit; stdin-range pre-push; `.skip`/`.only`; L2 HTTP tests; web L1; L3 Playwright. Today: pre-commit typecheck/lint/coverage on the working tree; gitleaks `--staged`; pre-push `build && test && lint` + osv.
 
 | Change | Proof | Status | Evidence |
 |---|---|---|---|
