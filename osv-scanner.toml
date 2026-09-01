@@ -3,7 +3,3 @@
 [[IgnoredVulns]]
 id = "GHSA-67mh-4wv8-2f99"
 reason = "esbuild: transitive dep from drizzle-kit/vite/tsx, no direct upgrade path"
-
-[[IgnoredVulns]]
-id = "GHSA-gv7w-rqvm-qjhr"
-reason = "esbuild: transitive dep from drizzle-kit (@esbuild-kit/core-utils, vite), no direct upgrade path"
