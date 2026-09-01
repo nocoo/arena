@@ -12,16 +12,16 @@ This file is the **contract**. Hooks, CI, and config are **enforcement**. If the
 |---|---|
 | Agent handbook | this file |
 | Human docs | README.md, `docs/01-system-design.md` |
-| Version | `packages/{core,cli,web}/package.json` `"version"` (`0.1.0`); root has none |
-| Enforcement | `.husky/pre-commit`, `.husky/pre-push`, `packages/core/vitest.config.ts`, `packages/cli/vitest.config.ts` |
+| Version | `packages/{core,cli,web}/package.json` `"version"` (`0.1.0`); CLI also hardcodes it in `packages/cli/src/index.ts` |
+| Enforcement | `.husky/*`, `.github/workflows/ci.yml`, `packages/core/vitest.config.ts`, `packages/cli/vitest.config.ts` |
 | Machine rules | global `AGENTS.md`, `rules/git-commit.md` |
 | Accidents | [Retrospective.md](Retrospective.md) |
-| Env files | omit (no tracked `.env.example`) |
+| Env files | gitignored web env (`GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `ALLOWED_EMAILS`). No tracked `.env.example` |
 
 ## Project Invariants
 
-- SQLite lives at `~/.arena/arena.db` via `bun:sqlite`. Do not point tests or the dashboard at a remote database.
-- Agents only `arena push` / `arena pop`. Humans set checkpoints in the dashboard.
+- SQLite lives at `~/.arena/arena.db`. Core uses `bun:sqlite` or `better-sqlite3` (Node/Next). Do not point tests or the dashboard at a remote database.
+- Agents `arena push` / `arena pop` / `arena status`. Humans set checkpoints in the dashboard.
 - Dashboard is `http://localhost:7021`. Do not invent extra public hosts.
 - Coverage gates apply to `core` and `cli` only. `@arena/web` has no unit tests today.
 
@@ -31,10 +31,10 @@ This file is the **contract**. Hooks, CI, and config are **enforcement**. If the
 |---|---|
 | Language | TypeScript 6 |
 | Package manager | Bun workspaces |
-| Runtime | CLI on Bun; Next.js 16 dashboard |
+| Runtime | CLI shebang `node`; Next.js 16 dashboard; Bun for package scripts |
 | Lint | ESLint `--max-warnings=0` |
 | Tests | Vitest L1 on core+cli (95/95/95, branches 90) |
-| Data | `bun:sqlite` `~/.arena/arena.db` |
+| Data | `~/.arena/arena.db` (`bun:sqlite` or `better-sqlite3`) |
 
 ```
 packages/core/   schema, drizzle, services
@@ -57,14 +57,14 @@ bun run test:coverage
 
 Status: `enforced` | `planned` | `manual` | `N/A`. `enforced` Evidence = hook/CI/config/script. `planned` has no Evidence. `manual` = human checklist.
 
-Org gaps to raise later (do not lower this file): index-snapshot pre-commit; stdin-range pre-push; `.skip`/`.only`; L2 real-HTTP; web L1; L3/L5. Today’s hooks run on the working tree (`typecheck`/`lint`/`test:coverage`/`gitleaks`; pre-push `build && test && lint` + osv).
+Org gaps to raise later (do not lower this file): index-snapshot pre-commit; stdin-range pre-push; `.skip`/`.only`; L2 HTTP tests; web L1; L3/L5. Today: pre-commit typecheck/lint/coverage on the working tree; gitleaks `--staged`; pre-push `build && test && lint` + osv.
 
 | Change | Proof | Status | Evidence |
 |---|---|---|---|
 | Logic | L1 vitest ≥95% stmt/func/line, 90% branches on core+cli | enforced | pre-commit → `test:coverage`; vitest configs |
-| API L2 real HTTP | 100% HTTP method combos | N/A | — (local sqlite services, no HTTP API suite) |
+| API L2 real HTTP | 100% `/api/topic` `/api/checkpoint` Auth | planned | — |
 | UI L3 | Playwright | planned | — |
-| Types / lint | tsc + ESLint 0 warning | enforced | pre-commit → `typecheck`, `lint` (working tree; not snapshot) |
+| Types / lint | tsc + ESLint 0 warning | enforced | pre-commit → `typecheck`, `lint` (working tree) |
 | G2 secrets | gitleaks | enforced | pre-commit → `gitleaks protect --staged` |
 | G2 deps | osv-scanner | enforced | pre-push → `osv-scanner scan --lockfile=bun.lock` |
 | `.skip` / `.only` | lint error | planned | — |
