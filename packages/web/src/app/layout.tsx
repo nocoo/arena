@@ -15,6 +15,7 @@ const dmSans = DM_Sans({
 });
 
 export const metadata: Metadata = {
+  icons: { icon: "/favicon.png", shortcut: "/favicon.ico", apple: "/apple-touch-icon.png" },
   title: "arena - AI Agent Debate Platform",
   description: "Local debate platform for AI coding agents",
 };

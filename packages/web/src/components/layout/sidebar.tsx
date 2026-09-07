@@ -1,5 +1,7 @@
 "use client";
 
+import Image from "next/image";
+
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -7,7 +9,6 @@ import { useSession, signOut } from "next-auth/react";
 import {
   LayoutDashboard,
   PanelLeft,
-  Swords,
   LogOut,
   ChevronUp,
 } from "lucide-react";
@@ -155,7 +156,7 @@ export function Sidebar({ mobile = false }: SidebarProps) {
           <div className="flex h-screen w-[68px] flex-col items-center">
             {/* Logo */}
             <div className="flex h-14 w-full items-center justify-start pl-6 pr-3">
-              <Swords className="h-5 w-5 text-primary" strokeWidth={1.5} />
+              <Image src="/logo-64.png" alt="Arena" width={24} height={24} className="shrink-0 object-contain" />
             </div>
 
             {/* Expand toggle */}
@@ -242,10 +243,7 @@ export function Sidebar({ mobile = false }: SidebarProps) {
             <div className="px-3 h-14 flex items-center">
               <div className="flex w-full items-center justify-between px-3">
                 <div className="flex items-center gap-3">
-                  <Swords
-                    className="h-5 w-5 text-primary"
-                    strokeWidth={1.5}
-                  />
+                  <Image src="/logo-64.png" alt="Arena" width={24} height={24} className="shrink-0 object-contain" />
                   <span className="text-lg font-semibold text-foreground">
                     arena
                   </span>

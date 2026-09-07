@@ -1,0 +1,70 @@
+{
+  "source": "logo.png",
+  "files": [
+    {
+      "path": "packages/web/public/logo-24.png",
+      "role": "transparent",
+      "size": 24,
+      "sha256": "689cdeb46a3182ab5c3b2a79de5b6a723fbaa4a28a56c5e2d5ee87b99da66bba"
+    },
+    {
+      "path": "packages/web/public/logo-32.png",
+      "role": "transparent",
+      "size": 32,
+      "sha256": "2e735a83d3f86b7f4efded8ada19bd41fb450a7161354f0680615f038c329272"
+    },
+    {
+      "path": "packages/web/public/logo-48.png",
+      "role": "transparent",
+      "size": 48,
+      "sha256": "faa0088d0627a996708984645e5fc269e98bb8cc973f509b862eca36fa3359d4"
+    },
+    {
+      "path": "packages/web/public/logo-64.png",
+      "role": "transparent",
+      "size": 64,
+      "sha256": "ff99dceab56c34a9d56f9d2f7687e9853b7cd7b412bfc107036cd8394101479e"
+    },
+    {
+      "path": "packages/web/public/logo-128.png",
+      "role": "transparent",
+      "size": 128,
+      "sha256": "848008f4554e908fcff72571932e004676cdfa8777d66c19c9878d8508e5da41"
+    },
+    {
+      "path": "packages/web/public/logo-192.png",
+      "role": "transparent",
+      "size": 192,
+      "sha256": "29ec0133f8425af7a55da40e9351f376c38a8de885ad79ef136fcd5b6f31874b"
+    },
+    {
+      "path": "packages/web/public/logo-256.png",
+      "role": "transparent",
+      "size": 256,
+      "sha256": "2b0d4afd7ce5cc4e19bf2e2a12ca15565e9002a5ef251016cc73590600636755"
+    },
+    {
+      "path": "packages/web/public/logo-512.png",
+      "role": "transparent",
+      "size": 512,
+      "sha256": "ef5d605a35f40c373a7ee4c1a9a9995c5848e979d445b826d7f236dc523a05a0"
+    },
+    {
+      "path": "packages/web/public/favicon.png",
+      "role": "transparent",
+      "size": 32,
+      "sha256": "2e735a83d3f86b7f4efded8ada19bd41fb450a7161354f0680615f038c329272"
+    },
+    {
+      "path": "packages/web/public/favicon.ico",
+      "role": "transparent",
+      "sha256": "686cd69104ff5443147ecbfb318aa38c486b87ecf7e093d02c95fb434cb14c10"
+    },
+    {
+      "path": "packages/web/public/apple-touch-icon.png",
+      "role": "platform-tile",
+      "size": 180,
+      "sha256": "7856bd11c56d367876c46a47ca0f58f2fe26399fe7e6546f8f9eaaa64efd1881"
+    }
+  ]
+}

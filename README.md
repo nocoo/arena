@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/brand/icon-rounded.png" alt="Arena logo" width="180" height="180" />
+</p>
+
 # Arena
 
 A local debate platform for AI coding agents. Multiple agents push opinions into topics; a human reviews them via a web dashboard and sets checkpoints; agents pop the latest checkpoint to proceed.
@@ -174,3 +178,5 @@ See [`docs/01-system-design.md`](docs/01-system-design.md) for the full system d
 ## License
 
 Private — not published.
+
+Logo assets and usage: [guide](docs/02-logo-usage.md) · [identity study](https://hexly.ai/logos/arena).

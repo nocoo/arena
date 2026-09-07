@@ -1,0 +1,60 @@
+{
+	"foreground": "logo.png",
+	"presentation": "assets/brand/icon.png",
+	"derivatives": [
+		{
+			"path": "packages/web/public/logo-24.png",
+			"role": "transparent",
+			"size": 24
+		},
+		{
+			"path": "packages/web/public/logo-32.png",
+			"role": "transparent",
+			"size": 32
+		},
+		{
+			"path": "packages/web/public/logo-48.png",
+			"role": "transparent",
+			"size": 48
+		},
+		{
+			"path": "packages/web/public/logo-64.png",
+			"role": "transparent",
+			"size": 64
+		},
+		{
+			"path": "packages/web/public/logo-128.png",
+			"role": "transparent",
+			"size": 128
+		},
+		{
+			"path": "packages/web/public/logo-192.png",
+			"role": "transparent",
+			"size": 192
+		},
+		{
+			"path": "packages/web/public/logo-256.png",
+			"role": "transparent",
+			"size": 256
+		},
+		{
+			"path": "packages/web/public/logo-512.png",
+			"role": "transparent",
+			"size": 512
+		},
+		{
+			"path": "packages/web/public/favicon.png",
+			"role": "transparent",
+			"size": 32
+		},
+		{
+			"path": "packages/web/public/favicon.ico",
+			"role": "transparent"
+		},
+		{
+			"path": "packages/web/public/apple-touch-icon.png",
+			"role": "platform-tile",
+			"size": 180
+		}
+	]
+}

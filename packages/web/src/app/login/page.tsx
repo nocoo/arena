@@ -1,9 +1,10 @@
 "use client";
 
+import Image from "next/image";
+
 import { signIn } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
-import { Swords } from "lucide-react";
 import { GithubIcon } from "@/components/icons/github-icon";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
 
@@ -97,10 +98,7 @@ function LoginContent() {
                 }}
               />
               <div className="flex items-center gap-2">
-                <Swords
-                  className="h-4 w-4 text-primary-foreground"
-                  strokeWidth={1.5}
-                />
+                <Image src="/logo-32.png" alt="Arena" width={16} height={16} className="shrink-0 object-contain" />
                 <span className="text-sm font-semibold text-primary-foreground">
                   arena
                 </span>
@@ -123,11 +121,8 @@ function LoginContent() {
           {/* Badge content */}
           <div className="flex flex-1 flex-col items-center px-6 pt-6 pb-14">
             {/* Avatar / logo placeholder */}
-            <div className="h-24 w-24 overflow-hidden rounded-full bg-secondary dark:bg-[#171717] ring-1 ring-border flex items-center justify-center">
-              <Swords
-                className="h-10 w-10 text-primary"
-                strokeWidth={1.5}
-              />
+            <div className="h-24 w-24 flex items-center justify-center">
+              <Image src="/logo-128.png" alt="Arena" width={96} height={96} className="shrink-0 object-contain" />
             </div>
 
             <p className="mt-5 text-lg font-semibold text-foreground">

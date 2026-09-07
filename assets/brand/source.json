@@ -1,0 +1,34 @@
+{
+	"project": "arena",
+	"series": "material",
+	"study": "2026-09-07-01",
+	"finishing": "01",
+	"archive": "https://github.com/nocoo/hexly.ai/tree/main/artwork/logo-family/arena/2026-09-07-01",
+	"review": "https://hexly.ai/logos/arena",
+	"masters": {
+		"logo.png": {
+			"sha256": "84ab91476407de4ab4094adace81a6ff7958512c5f0066c3fc62a63421728e59",
+			"source": "artwork/logo-family/arena/2026-09-07-01/finishing/01/exports/arena-transparent-2048.png",
+			"width": 2048,
+			"height": 2048
+		},
+		"assets/brand/icon.png": {
+			"sha256": "177ee60b1c3bff747ced49864edbdbe851b56b330fee78df1a08c7c928e7f269",
+			"source": "artwork/logo-family/arena/2026-09-07-01/finishing/01/exports/arena-icon-2048.png",
+			"width": 2048,
+			"height": 2048
+		},
+		"assets/brand/icon-rounded.png": {
+			"sha256": "b7ab60b0ffa7c3af962a7edfbcfb182b8c79c94c48d567dd59cf2ba9215f993e",
+			"source": "artwork/logo-family/arena/2026-09-07-01/finishing/01/exports/arena-rounded-2048.png",
+			"width": 2048,
+			"height": 2048
+		},
+		"assets/brand/background.png": {
+			"sha256": "5c7e4666c708df0ff1f7d149e73d13a5a4c3e50600943ab1c7c3c6c79843b0a2",
+			"source": "artwork/logo-family/arena/2026-09-07-01/finishing/01/background.png",
+			"width": 2048,
+			"height": 2048
+		}
+	}
+}
