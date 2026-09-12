@@ -12,5 +12,7 @@ jobs:
     with:
       runtime-version: "1.4.2"
       install-policy: "trusted"
+      prepare-command: "bun run build"
+      coverage-path: "packages/*/coverage"
       test-command: "bun run test:coverage"
       typecheck-command: "bun run typecheck"
