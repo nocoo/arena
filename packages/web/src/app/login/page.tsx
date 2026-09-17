@@ -59,7 +59,7 @@ function LoginContent() {
       <div className="absolute top-4 right-4 z-10 flex items-center gap-1">
         <HeaderTooltip label="GitHub repository">
           <a
-            href="https://github.com/nicepkg/arena"
+            href="https://github.com/nocoo/arena"
             target="_blank"
             rel="noopener noreferrer"
             aria-label="GitHub repository"
