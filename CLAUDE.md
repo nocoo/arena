@@ -1,100 +1,90 @@
 # Arena
 
-Local debate board for AI coding agents: agents `push`/`pop`, a human sets checkpoints on a web dashboard.
-Profile: ts-worker-web (Next.js dashboard + CLI, not a Worker).
+Local debate board where coding agents submit opinions through a CLI and humans record decisions in a dashboard.
+Profile: ts-worker-web, using Next.js and a Bun CLI; there is no Cloudflare Worker.
 Direction: [docs/01-system-design.md](docs/01-system-design.md). Frameworks must not rewrite this file.
 
 ## Sources of Truth
 
-This file is the **contract**. Hooks, CI, and config are **enforcement**. If they disagree, that is a failure — raise enforcement; never lower this file to a weaker hook.
+This file is the contract; hooks, CI and configuration enforce it. Raise weaker enforcement instead of lowering this contract.
 
 | Fact | Where |
 |---|---|
-| Agent handbook | this file |
-| Human docs | README.md, `docs/01-system-design.md` |
-| Version | `packages/{core,cli,web}/package.json` `"version"` (`0.1.0`); CLI also hardcodes it in `packages/cli/src/index.ts` |
-| Enforcement | `.husky/*`, `.github/workflows/ci.yml`, `packages/core/vitest.config.ts`, `packages/cli/vitest.config.ts` |
-| Machine rules | global `AGENTS.md`, `rules/git-commit.md` |
+| Human docs | [README.md](README.md), [design](docs/01-system-design.md) |
+| Version | `packages/core/package.json`, `packages/cli/package.json`, `packages/web/package.json`; CLI entry also embeds its version |
+| Enforcement | `.husky/`, `.github/workflows/ci.yml`, per-package Vitest configs |
+| Local secrets | Gitignored `packages/web/.env.local`; no tracked env example |
+| Machine rules | Global `AGENTS.md` and `rules/` |
 | Accidents | [Retrospective.md](Retrospective.md) |
-| Env files | gitignored web env (`GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `ALLOWED_EMAILS`). No tracked `.env.example` |
 
 ## Project Invariants
 
-- SQLite lives at `~/.arena/arena.db`. Core uses `bun:sqlite` or `better-sqlite3` (Node/Next). Do not point tests or the dashboard at a remote database.
-- Agents `arena push` / `arena pop` / `arena status`. Humans set checkpoints in the dashboard.
-- Dashboard is `http://localhost:7021`. Do not invent extra public hosts.
-- Coverage gates apply to `core` and `cli` only. `@arena/web` has no unit tests today.
+- CLI and dashboard share the local human database `~/.arena/arena.db`; tests must never use it. Core selects `bun:sqlite` or `better-sqlite3` for Bun versus Node/Next.
+- Agents use `push`, `pop` and `status`; humans create checkpoints. `pop` is immediate and non-destructive; pending/no-topic returns exit code 1.
+- Project identity is the filesystem directory, not its Git remote. Moving a checkout changes its identity.
+- Run the CLI explicitly with Bun: the emitted shebang says Node but the current database loader relies on Bun behavior.
+- Dashboard is `http://localhost:7021`. Google OAuth protects it; an empty `ALLOWED_EMAILS` currently permits any Google-authenticated account. Preserve explicit access policy when changing auth.
+- Keep WAL and foreign keys enabled. Do not invent remote databases or public hosts.
 
 ## Stack / Layout
 
 | Component | Choice |
 |---|---|
-| Language | TypeScript 6 |
-| Package manager | Bun workspaces |
-| Runtime | Bun for scripts/tests/CLI in practice; Next.js 16 dashboard. CLI shebang is `node` but DB uses `require` — do not run the CLI under Node |
-| Lint | ESLint `--max-warnings=0` |
-| Tests | Vitest L1 on core+cli (95/95/95, branches 90) |
-| Data | `~/.arena/arena.db` (`bun:sqlite` or `better-sqlite3`) |
-
-```
-packages/core/   schema, drizzle, services
-packages/cli/    arena push/pop/status
-packages/web/    Next.js dashboard :7021
-docs/            numbered design doc
-```
+| Language / install | TypeScript 6, Bun workspaces; CI pins Bun 1.4.2 |
+| Runtime | Bun CLI, Next.js 16 dashboard, SQLite/Drizzle |
+| Static / unit | TypeScript, ESLint `--max-warnings=0`, Vitest |
+| `packages/core/` | Schema, persistence, topic/opinion/checkpoint services |
+| `packages/cli/` | Commander CLI, unit and process integration tests |
+| `packages/web/`, `packages/skill/` | Dashboard/API and agent usage instructions |
 
 ## Commands
 
+Run from the root; use Node 24+ for dashboard tooling. Builds fetch Google Fonts and need that network access.
+
 ```bash
+bun install --frozen-lockfile
+bun run --cwd packages/core build
+bun run --cwd packages/cli build
 bun run dev
 bun run typecheck
 bun run lint
 bun run build
 bun run test:coverage
+bun run --cwd packages/cli test:integration
 ```
+
+`bun run test` runs the workspace suites, including CLI subprocess tests. Dashboard development needs `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `AUTH_SECRET`, `AUTH_URL`, and `ALLOWED_EMAILS` in its ignored env file. Tests use temporary local databases and need no Google login.
 
 ## Verification
 
-Status: `enforced` | `planned` | `manual` | `N/A`. `enforced` Evidence = hook/CI/config/script. `planned` has no Evidence. `manual` = human checklist.
+6DQ = L1/L2/L3 + G1/G2 + D1. Status: `enforced`, `planned`, `manual`, `N/A`.
 
-Org gaps to raise later (do not lower this file): index-snapshot pre-commit; stdin-range pre-push; `.skip`/`.only`; L2 HTTP tests; web L1; L3 Playwright. Today: pre-commit typecheck/lint/coverage on the working tree; gitleaks `--staged`; pre-push `build && test && lint` + osv.
-
-| Change | Proof | Status | Evidence |
+| Dimension | Required proof | Status | Current enforcement / gap |
 |---|---|---|---|
-| Logic | L1 vitest ≥95% stmt/func/line, 90% branches on core+cli | enforced | pre-commit → `test:coverage`; vitest configs |
-| API L2 real HTTP | 100% `/api/topic` `/api/checkpoint` Auth | planned | — |
-| UI L3 | Playwright | planned | — |
-| Types / lint | tsc + ESLint 0 warning | enforced | pre-commit → `typecheck`, `lint` (working tree) |
-| G2 secrets | gitleaks | enforced | pre-commit → `gitleaks protect --staged` |
-| G2 deps | osv-scanner | enforced | pre-push → `osv-scanner scan --lockfile=bun.lock` |
-| `.skip` / `.only` | lint error | planned | — |
-| Bundler | `next build` + workspace build | enforced | pre-push → `bun run build` |
-| Docs | numbered doc if behavior changes | manual | human review |
-| Release | none | N/A | — |
+| L1 logic | Statements, branches, functions and lines each ≥95%; no `.skip` / `.only` | planned | Core/CLI configs enforce 95/90/95/95 with exclusions and `all: false`; web has no unit suite and no complete skip/focus gate |
+| L2 API | Real HTTP over every topic/checkpoint/auth endpoint and method | planned | No HTTP runner or endpoint inventory exists; CLI integration is real subprocess/SQLite behavior, not dashboard HTTP proof |
+| L3 workflows | CLI submit/read and dashboard decision journeys | planned | Pre-push `test` runs CLI process tests; dashboard OAuth/create/checkpoint automation is missing |
+| G1 static | Strict types and check-only lint; zero errors/warnings | enforced | Pre-commit typecheck/lint and pinned CI quality workflow |
+| G2 security | Secret and dependency scans; missing scanner fails | enforced | Pre-commit staged Gitleaks, pre-push OSV, CI shared security scans |
+| D1 isolation | Per-run temporary databases, guarded writes/cleanup; no daily-dev data | planned | Core tests allocate temp SQLite; CLI tests allocate temporary home directories. Dashboard test harness and explicit cleanup guards are absent |
+| Build | Core/CLI emit plus dashboard bundling | enforced | Pre-push `build`; CI `prepare-command: bun run build` |
+| Docs | Design and agent usage stay consistent | manual | Review numbered docs when behavior changes |
 
-| Hook | Org bar | Status | Evidence |
-|---|---|---|---|
-| pre-commit | index snapshot for G1+L1 | planned | — |
-| pre-push | stdin ref range | planned | — |
+| Hook | Current behavior | Required follow-up |
+|---|---|---|
+| pre-commit | Working-tree typecheck/lint/coverage plus staged Gitleaks | Check the index snapshot, G1+L1 <30s |
+| pre-push | Working-tree build/test/lint, then OSV | L2+G2 on stdin push refs, <3min |
 
-`--no-verify` forbidden on commits and branch pushes. Tag-only may skip.
+Install restores Husky through `prepare`. Hooks are check-only; never use `--no-verify` on commits or branch pushes. CI pins `base-ci/quality.yml@ad43150de3a2be2fa464b5cd2f921dc4fa9f8f0f`.
 
 ## Resources / Isolation
 
-| Purpose | Port / resource | Isolation |
-|---|---|---|
-| Dev | 7021 `http://localhost:7021` | local sqlite `~/.arena/arena.db` |
-| Tests | vitest in-process | package tests; do not use a shared human DB |
+Daily dashboard traffic uses port 7021 and the user's SQLite database. Existing unit/process tests own temporary local directories; clean only the directory allocated by the current test. A dashboard L2/L3 server with separate state and ports remains planned. Never point E2E at the daily database, even though this application has no remote production database.
 
-E2E never touches prod data stores (there is no remote prod).
+## Operations / Release
+
+This is a private local workspace with no automated public release. Build core/CLI before using `bun packages/cli/dist/index.js`; keep embedded CLI version consistent if an authorized version change is made. Dashboard setup and OAuth callback instructions are in [README.md](README.md).
 
 ## Retrospective
 
-| Kind | Where |
-|---|---|
-| Accident narrative | [Retrospective.md](Retrospective.md) |
-| Recurring project rule | one line here (cap ~10) |
-| Cross-project | nmem / global rules |
-| Checkable rule | hook or test |
-
-- (none yet)
+Narratives stay in [Retrospective.md](Retrospective.md); keep only recurring project rules here, cross-project lessons in global rules/nmem, and deterministic checks in hooks/tests.
