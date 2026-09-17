@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { Menu } from "lucide-react";
 import { GithubIcon } from "@/components/icons/github-icon";
+import { HeaderTooltip, HexlyLink } from "./hexly-link";
 import { Sidebar } from "./sidebar";
 import { SidebarProvider, useSidebar } from "./sidebar-context";
 import { ThemeToggle } from "./theme-toggle";
@@ -87,18 +88,21 @@ function AppShellInner({ children, title }: AppShellProps) {
             )}
           </div>
           <div className="flex items-center gap-1">
-            <a
-              href="https://github.com/nicepkg/arena"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="GitHub repository"
-              className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
-            >
-              <GithubIcon
-                className="h-[18px] w-[18px]"
-                aria-hidden="true"
-              />
-            </a>
+            <HeaderTooltip label="GitHub repository">
+              <a
+                href="https://github.com/nicepkg/arena"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="GitHub repository"
+                className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+              >
+                <GithubIcon
+                  className="h-[18px] w-[18px]"
+                  aria-hidden="true"
+                />
+              </a>
+            </HeaderTooltip>
+            <HexlyLink />
             <ThemeToggle />
           </div>
         </header>
